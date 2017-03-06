@@ -88,8 +88,7 @@ namespace cvtools {
 
     void PLSClassifier::response_impl(Matrix &samples, Matrix &resp) const {
 
-        if(resp.rows != samples.rows || resp.cols != models.size())
-            ;
+        if(resp.rows != samples.rows || resp.cols != models.size());
             resp.create(samples.rows, models.size());
 
 #pragma omp parallel for

@@ -61,8 +61,8 @@ namespace cvtools {
     public:
 
         Hog(const cv::Size &block = cv::Size(16, 16),
-                const cv::Size &stride = cv::Size(4, 4),
-                const cv::Size &cell = cv::Size(4, 4));
+                const cv::Size &stride = cv::Size(8, 8),
+                const cv::Size &cell = cv::Size(8, 8));
 
     private:
 
@@ -218,7 +218,7 @@ namespace cvtools {
                 _block.width = lbp_image.cols;
             if (_block.height > lbp_image.rows)
                 _block.height = lbp_image.rows;
-
+            
             sldwin(lbp_image, _block, stride,
                     [&](Image & crop) {
 
@@ -284,36 +284,21 @@ namespace cvtools {
     };
 
     /*
-     * SIFT
-     */
-    class SIFT : public Descriptor {
-    public:
-        SIFT(const int numKeypoints = 16, const int Xstep = -1, const int Ystep = -1);
-
-    private:
-        Matrix compute_impl(const Image &image) const;
-
-        cv::Ptr<cv::Feature2D> sift;
-        int numKeypoints;
-        int Xstep, Ystep;
-    };
-
-    /*
      * Dense
      */
-//    class Dense : public Descriptor {
-//    public:
-//
-//        Dense(cv::DescriptorExtractor* descriptor, const int step = 8);
-//
-//        ~Dense();
-//
-//    private:
-//
-//        Matrix compute_impl(const Image &image) const;
-//
-//        cv::DenseFeatureDetector detector;
-//        cv::DescriptorExtractor *descriptor;
-//    };
+    // class Dense : public Descriptor {
+    // public:
+
+    //     Dense(cv::DescriptorExtractor* descriptor, const int step = 8);
+
+    //     ~Dense();
+
+    // private:
+
+    //     Matrix compute_impl(const Image &image) const;
+
+    //     cv::DenseFeatureDetector detector;
+    //     cv::DescriptorExtractor *descriptor;
+    // };
 }
 #endif
