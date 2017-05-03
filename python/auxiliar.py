@@ -39,7 +39,34 @@ def split_known_unknown_sets(complete_tuple_list, known_set_size=0.5):
     return known_tuple, unknown_tuple
 
 
+def split_train_test_samples(complete_tuple_list, train_set_samples=4):
+    print('split_train_test_samples')
+    to_shuffle = [item for item in complete_tuple_list]
+    np.random.shuffle(to_shuffle)
+
+    tuple_dict = dict()
+    for (path, label) in to_shuffle:
+        if tuple_dict.has_key(label):
+            tuple_dict[label].append(path)
+        else:
+            tuple_dict[label] = [path]
+
+    for tuple in tuple_dict.iteritems():
+        assert len(tuple[1]) > train_set_samples
+    
+    test_set = []
+    train_set = []
+    for (label, paths) in tuple_dict.iteritems():
+        for path in paths[0:train_set_samples]:
+            train_set.append((path, label))
+        for path in paths[train_set_samples:len(paths)]:
+            test_set.append((path, label))
+
+    return train_set, test_set
+
+
 def split_train_test_sets(complete_tuple_list, train_set_size=0.5):
+    print('split_train_test_sets')
     from sklearn.model_selection import train_test_split
     labels = []
     paths = []
@@ -118,28 +145,6 @@ def generate_probe_histogram(individuals, values, extra_name):
         plt.savefig('plots/' + extra_name + '_' + str(NUM_HASH) + '_' + str(counter) + '_' + sample_name + '_' + result[0][0] + '_ERROR')
 
 
-def generate_cmc_curve(cmc_scores, extra_name):
-    """
-    The CMC shows how often the biometric subject template appears in the ranks (1, 5, 10, 100, etc.), based on the match rate.
-    It is a method of showing measured accuracy performance of a biometric system operating in the closed-set identification task. 
-    Templates are compared and ranked based on their similarity.
-    """
-    # Plot Cumulative Matching Characteristic curve
-    plt.clf()
-    for cmc in cmc_scores:
-        x_axis = range(len(cmc))
-        y_axis = cmc
-        plt.plot(x_axis, y_axis, color='blue', linestyle='-')
-    
-    plt.xlim([0, len(cmc_scores)])
-    plt.ylim([0.0, 1.05])
-    plt.xlabel('Rank')
-    plt.ylabel('Accuracy Rate')
-    plt.title('Cumulative Matching Characteristic')
-    plt.savefig('plots/CMC_' + extra_name + '.png')
-    # plt.show()
-
-
 def generate_precision_recall(y_label_list, y_score_list):
     """
     A system with high recall but low precision returns many results, but most of its predicted labels are incorrect when compared to the training labels. 
@@ -157,11 +162,6 @@ def generate_precision_recall(y_label_list, y_score_list):
         score_list.append(temp_list)
     label_array = np.array(label_list)
     score_array = np.array(score_list)
-
-    average_precision = dict()
-    precision = dict()
-    recall = dict()
-    thresh = dict()
 
     # Compute micro-average ROC curve and ROC area
     pr = dict()
@@ -195,6 +195,42 @@ def generate_roc_curve(y_label_list, y_score_list):
     return roc
 
 
+def plot_cmc_curve(cmc_scores, extra_name):
+    """
+    The CMC shows how often the biometric subject template appears in the ranks (1, 5, 10, 100, etc.), based on the match rate.
+    It is a method of showing measured accuracy performance of a biometric system operating in the closed-set identification task. 
+    Templates are compared and ranked based on their similarity.
+    """
+    # Setup plot details
+    color_dict = dict(mcolors.BASE_COLORS, **mcolors.CSS4_COLORS)
+    color_names = [name for name, color in color_dict.items()]
+    colors = cycle(color_names)
+    lw = 2
+
+    # Plot Cumulative Matching Characteristic curve
+    plt.clf()
+    counter = 1
+    for score, color in zip(cmc_scores, colors):
+        x_axis = range(len(score))
+        y_axis = score
+        area = auc(x_axis, y_axis)/len(score)
+        plt.plot(x_axis, y_axis, lw=lw, color=color, label='CMC curve %d (area = %0.2f)' % (counter, area))
+        counter += 1
+
+    plt.xlim([0, len(score)])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('Rank')
+    plt.ylabel('Accuracy Rate')
+    plt.title('Cumulative Matching Characteristic')
+    plt.legend(loc="lower right")
+    plt.grid()
+    if extra_name == None:
+        plt.show()
+    else:
+        plt.savefig('./plots/CMC_' + extra_name + '.pdf')
+    plt.close()
+
+
 def plot_precision_recall(prs, extra_name=None):
     # Setup plot details
     color_dict = dict(mcolors.BASE_COLORS, **mcolors.CSS4_COLORS)
@@ -218,6 +254,7 @@ def plot_precision_recall(prs, extra_name=None):
         plt.show()
     else:
         plt.savefig('./plots/PR_' + extra_name + '.pdf')
+    plt.close()
 
 
 def plot_roc_curve(rocs, extra_name=None):
@@ -244,3 +281,4 @@ def plot_roc_curve(rocs, extra_name=None):
         plt.show()
     else:
         plt.savefig('./plots/ROC_' + extra_name + '.pdf')
+    plt.close()

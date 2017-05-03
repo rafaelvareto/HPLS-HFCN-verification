@@ -7,28 +7,23 @@ import pickle
 
 matplotlib.use('Agg')
 
-from auxiliar import generate_cmc_curve
 from auxiliar import generate_pos_neg_dict
 from auxiliar import generate_precision_recall, plot_precision_recall
 from auxiliar import generate_roc_curve, plot_roc_curve
+from auxiliar import plot_cmc_curve
 from auxiliar import learn_plsh_model
 from auxiliar import load_txt_file
-from auxiliar import split_train_test_sets
-from descriptor import Descriptor
+from auxiliar import split_known_unknown_sets, split_train_test_sets, split_train_test_samples
 from joblib import Parallel, delayed
 from matplotlib import pyplot
 from pls_classifier import PLSClassifier
-from vggface import VGGFace
 
 
-parser = argparse.ArgumentParser(description='HPLS for Face Recognition with Feature Extraction')
-parser.add_argument('-p', '--path', help='Path do dataset', required=False, default='./frgcv1/')
-parser.add_argument('-f', '--file', help='Input file name', required=False, default='train_2_small.txt')
-parser.add_argument('-d', '--desc', help='Descriptor [hog/df]', required=False, default='hog')
+parser = argparse.ArgumentParser(description='HPLS for Face Recognition with NO Feature Extraction')
+parser.add_argument('-p', '--path', help='Path do binary feature file', required=False, default='../features/')
+parser.add_argument('-f', '--file', help='Input binary feature file name', required=False, default='FRGC-SET-4-DEEP-FEATURE-VECTORS.bin')
 parser.add_argument('-r', '--rept', help='Number of executions', required=False, default=1)
 parser.add_argument('-m', '--hash', help='Number of hash functions', required=False, default=100)
-parser.add_argument('-iw', '--width', help='Default image width', required=False, default=128)
-parser.add_argument('-ih', '--height', help='Default image height', required=False, default=144)
 parser.add_argument('-ts', '--train_set_size', help='Default size of training subset', required=False, default=0.5)
 args = parser.parse_args()
 
@@ -36,64 +31,62 @@ args = parser.parse_args()
 def main():
     PATH = str(args.path)
     DATASET = str(args.file)
-    DESCRIPTOR = str(args.desc)
     ITERATIONS = int(args.rept)
-    NUM_HASH = int(args.hash)
     TRAIN_SET_SIZE = float(args.train_set_size)
+    NUM_HASH = int(args.hash)
+    DATASET = DATASET.replace('-FEATURE-VECTORS.bin','')
+    OUTPUT_NAME = 'HPLS_' + DATASET + '_' + str(NUM_HASH) + '_' + str(TRAIN_SET_SIZE) + '_' + str(ITERATIONS)
 
-    DATASET = DATASET.replace('.txt','')
-    OUTPUT_NAME = 'HPLS_' + DATASET + '_' + DESCRIPTOR + '_' + str(NUM_HASH) + '_' + str(TRAIN_SET_SIZE) + '_' + str(ITERATIONS)
+    cmcs = []
+    prs = []
+    rocs = []
+    with Parallel(n_jobs=1, verbose=11, backend='multiprocessing') as parallel_pool:
+        for index in range(ITERATIONS):
+            print('ITERATION #%s' % str(index+1))
+            cmc, pr, roc = hplsface(args, parallel_pool)
+            cmcs.append(cmc)
+            prs.append(pr)
+            rocs.append(roc)
 
-    cmc_values = []
-    for index in range(ITERATIONS):
-        print('ITERATION #%s' % str(index+1))
-        cmc = hplsface(args)
-        cmc_values.append(cmc)
+            with open('./files/' + OUTPUT_NAME + '.file', 'w') as outfile:
+                pickle.dump([prs, rocs], outfile)
 
-        with open('./files/' + OUTPUT_NAME + '.file', 'w') as outfile:
-            pickle.dump([cmc_values], outfile)
+            plot_cmc_curve(cmcs, OUTPUT_NAME)
+            plot_precision_recall(prs, OUTPUT_NAME)
+            plot_roc_curve(rocs, OUTPUT_NAME)
 
-        generate_cmc_curve(cmc_values, OUTPUT_NAME)
-    
 
-def hplsface(args):
+def hplsface(args, parallel_pool):
     PATH = str(args.path)
     DATASET = str(args.file)
-    DESCRIPTOR = str(args.desc)
     NUM_HASH = int(args.hash)
-    IMG_WIDTH = int(args.width)
-    IMG_HEIGHT = int(args.height)
     TRAIN_SET_SIZE = float(args.train_set_size)
+
+    print('>> LOADING FEATURES FROM FILE')
+    with open(PATH + DATASET, 'rb') as input_file:
+        list_of_paths, list_of_labels, list_of_features = pickle.load(input_file)
 
     matrix_x = []
     matrix_y = []
-    splits = []
-
     plotting_labels = []
     plotting_scores = []
-
-    vgg_model = None
-    if DESCRIPTOR == 'df':
-        vgg_model = VGGFace()
+    splits = []
     
     print('>> EXPLORING DATASET')
-    dataset_list = load_txt_file(PATH + DATASET)
-    known_train, known_test = split_train_test_sets(dataset_list, train_set_size=TRAIN_SET_SIZE)
+    dataset_dict = {value:index for index,value in enumerate(list_of_paths)}
+    dataset_list = zip(list_of_paths, list_of_labels)
+    if TRAIN_SET_SIZE > 1.0:
+        known_train, known_test = split_train_test_samples(dataset_list, train_set_samples=int(TRAIN_SET_SIZE))
+    else:
+        known_train, known_test = split_train_test_sets(dataset_list, train_set_size=TRAIN_SET_SIZE)
 
     print('>> LOADING GALLERY: {0} samples'.format(len(known_train)))
     counterA = 0
     for gallery_sample in known_train:
         sample_path = gallery_sample[0]
         sample_name = gallery_sample[1]
-        
-        gallery_path = PATH + sample_path
-        gallery_image = cv.imread(gallery_path, cv.IMREAD_COLOR)
-        
-        if DESCRIPTOR == 'hog':
-            gallery_image = cv.resize(gallery_image, (IMG_HEIGHT, IMG_WIDTH))
-            feature_vector = Descriptor.get_hog(gallery_image)
-        elif DESCRIPTOR == 'df':
-            feature_vector = Descriptor.get_deep_feature(gallery_image, vgg_model, layer_name='fc6')
+        sample_index = dataset_dict[sample_path]
+        feature_vector = list_of_features[sample_index] 
     
         matrix_x.append(feature_vector)
         matrix_y.append(sample_name)
@@ -108,23 +101,20 @@ def hplsface(args):
         splits.append(generate_pos_neg_dict(individuals))
 
     print('>> LEARNING PLS MODELS:')
-    input_list = itertools.izip(splits, itertools.repeat((matrix_x, matrix_y)))
-    models = Parallel(n_jobs=1, verbose=11, backend='threading')(
-             map(delayed(learn_plsh_model), input_list))
+    numpy_x = np.array(matrix_x)
+    numpy_y = np.array(matrix_y)
+    numpy_s = np.array(splits)
+    models = parallel_pool(
+        delayed(learn_plsh_model) (numpy_x, numpy_y, split) for split in numpy_s
+    )
   
     print('>> LOADING KNOWN PROBE: {0} samples'.format(len(known_test)))
     counterB = 0
     for probe_sample in known_test:
         sample_path = probe_sample[0]
         sample_name = probe_sample[1]
-
-        query_path = PATH + sample_path
-        query_image = cv.imread(query_path, cv.IMREAD_COLOR)
-        if DESCRIPTOR == 'hog':
-            query_image = cv.resize(query_image, (IMG_HEIGHT, IMG_WIDTH))
-            feature_vector = Descriptor.get_hog(query_image)
-        elif DESCRIPTOR == 'df':
-            feature_vector = Descriptor.get_deep_feature(query_image, vgg_model)
+        sample_index = dataset_dict[sample_path]
+        feature_vector = list_of_features[sample_index] 
 
         vote_dict = dict(map(lambda vote: (vote, 0), individuals))
         for model in models:
@@ -153,8 +143,16 @@ def hplsface(args):
         plotting_labels.append([(sample_name, 1)])
         plotting_scores.append([(sample_name, output)])
 
-    cmc_score_norm = np.divide(cmc_score, counterA)
-    return cmc_score_norm
+    del models[:]
+    del list_of_paths[:]
+    del list_of_labels[:]
+    del list_of_features[:]
+    
+    cmc = np.divide(cmc_score, counterB) 
+    pr = generate_precision_recall(plotting_labels, plotting_scores)
+    roc = generate_roc_curve(plotting_labels, plotting_scores)
+    return cmc, pr, roc
 
 if __name__ == "__main__":
     main()
+    

@@ -28,7 +28,7 @@ from keras.optimizers import RMSprop
 from keras.utils import np_utils
 from keras import callbacks
 
-parser = argparse.ArgumentParser(description='PLSH for Face Recognition with NO Feature Extraction')
+parser = argparse.ArgumentParser(description='HFCN for Face Recognition with NO Feature Extraction')
 parser.add_argument('-p', '--path', help='Path do binary feature file', required=False, default='./features/')
 parser.add_argument('-f', '--file', help='Input binary feature file name', required=False, default='FRGC-SET-4-DEEP-FEATURE-VECTORS.bin')
 parser.add_argument('-r', '--rept', help='Number of executions', required=False, default=1)

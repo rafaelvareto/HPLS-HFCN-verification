@@ -19,7 +19,7 @@ from matplotlib import pyplot
 from pls_classifier import PLSClassifier
 
 
-parser = argparse.ArgumentParser(description='PLSH for Face Recognition with NO Feature Extraction')
+parser = argparse.ArgumentParser(description='HPLS for Face Recognition with NO Feature Extraction')
 parser.add_argument('-p', '--path', help='Path do binary feature file', required=False, default='./features/')
 parser.add_argument('-f', '--file', help='Input binary feature file name', required=False, default='FRGC-SET-X-HOG-VECTORS.bin')
 parser.add_argument('-r', '--rept', help='Number of executions', required=False, default=1)
@@ -45,7 +45,7 @@ def main():
     with Parallel(n_jobs=-2, verbose=11, backend='multiprocessing') as parallel_pool:
         for index in range(ITERATIONS):
             print('ITERATION #%s' % str(index+1))
-            pr, roc = plshface(args, parallel_pool)
+            pr, roc = hplsface(args, parallel_pool)
             prs.append(pr)
             rocs.append(roc)
 
@@ -56,7 +56,7 @@ def main():
             plot_roc_curve(rocs, OUTPUT_NAME)
     
 
-def plshface(args, parallel_pool):
+def hplsface(args, parallel_pool):
     PATH = str(args.path)
     DATASET = str(args.file)
     NUM_HASH = int(args.hash)

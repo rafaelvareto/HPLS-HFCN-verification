@@ -20,7 +20,7 @@ from matplotlib import pyplot
 from pls_classifier import PLSClassifier
 
 
-parser = argparse.ArgumentParser(description='PLSH for Face Recognition')
+parser = argparse.ArgumentParser(description='HPLS for Face Recognition with Feature Extraction')
 parser.add_argument('-p', '--path', help='Path do dataset', required=False, default='./frgcv1/')
 parser.add_argument('-f', '--file', help='Input file name', required=False, default='train_2_small.txt')
 parser.add_argument('-d', '--desc', help='Descriptor [hog/df]', required=False, default='hog')
@@ -50,7 +50,7 @@ def main():
     with Parallel(n_jobs=-2, verbose=11, backend='multiprocessing') as parallel_pool:
         for index in range(ITERATIONS):
             print('ITERATION #%s' % str(index+1))
-            pr, roc = plshface(args, parallel_pool)
+            pr, roc = hplsface(args, parallel_pool)
             prs.append(pr)
             rocs.append(roc)
 
@@ -59,9 +59,9 @@ def main():
 
             plot_precision_recall(prs, OUTPUT_NAME)
             plot_roc_curve(rocs, OUTPUT_NAME)
-    
 
-def plshface(args, parallel_pool):
+
+def hplsface(args, parallel_pool):
     PATH = str(args.path)
     DATASET = str(args.file)
     DESCRIPTOR = str(args.desc)
