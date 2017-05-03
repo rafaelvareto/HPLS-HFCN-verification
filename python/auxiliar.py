@@ -1,9 +1,17 @@
 import cv2 as cv
+import keras
 import matplotlib
 import numpy as np
 import random
 
 matplotlib.use('Agg')
+
+from keras.datasets import mnist
+from keras.layers import Dense, Dropout
+from keras.models import Sequential
+from keras.optimizers import RMSprop
+from keras.utils import np_utils
+from keras import callbacks
 
 from itertools import cycle
 from matplotlib import colors as mcolors
@@ -128,7 +136,27 @@ def split_into_chunks(full_list, num_chunks):
         split_list.append(full_list[index:index+chunk_size])
     return split_list
 
+
+def getModel(input_shape, nclasses=2):
+    model = Sequential()
+    model.add(Dense(64, activation='relu', input_shape=input_shape))
+    model.add(Dropout(0.2))
+    model.add(Dense(nclasses, activation='softmax'))
+    #model.summary()
+    model.compile(loss='categorical_crossentropy', optimizer='adadelta', metrics=['accuracy'])#RMSprop()
+
+    return model
+
+
+def learn_fcn_model(X, Y, split):
+    boolean_label = [(split[key]+1)/2 for key in Y]
+    y_train = np_utils.to_categorical(boolean_label, 2)
     
+    model = getModel(input_shape=X[0].shape)
+    model.fit(X, y_train, batch_size=40, nb_epoch=100, verbose=0)
+    return (model, split)
+
+
 def learn_plsh_model(matrix_x, matrix_y, split):
     classifier = PLSClassifier()
     boolean_label = [split[key] for key in matrix_y]

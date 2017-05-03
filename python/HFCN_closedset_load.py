@@ -1,3 +1,8 @@
+from __future__ import print_function
+
+import os
+#os.environ["THEANO_FLAGS"] = "device=gpu0"
+
 import argparse
 import cv2 as cv
 import itertools
@@ -11,15 +16,13 @@ from auxiliar import generate_pos_neg_dict
 from auxiliar import generate_precision_recall, plot_precision_recall
 from auxiliar import generate_roc_curve, plot_roc_curve
 from auxiliar import plot_cmc_curve
-from auxiliar import learn_plsh_model
+from auxiliar import learn_fcn_model
 from auxiliar import load_txt_file
 from auxiliar import split_known_unknown_sets, split_train_test_sets, split_train_test_samples
 from joblib import Parallel, delayed
 from matplotlib import pyplot
-from pls_classifier import PLSClassifier
 
-
-parser = argparse.ArgumentParser(description='HPLS for Face Recognition with NO Feature Extraction')
+parser = argparse.ArgumentParser(description='HFCN for Face Recognition with NO Feature Extraction')
 parser.add_argument('-p', '--path', help='Path do binary feature file', required=False, default='../features/')
 parser.add_argument('-f', '--file', help='Input binary feature file name', required=False, default='FRGC-SET-4-DEEP-FEATURE-VECTORS.bin')
 parser.add_argument('-r', '--rept', help='Number of executions', required=False, default=1)
@@ -35,20 +38,20 @@ def main():
     TRAIN_SET_SIZE = float(args.train_set_size)
     NUM_HASH = int(args.hash)
     DATASET = DATASET.replace('-FEATURE-VECTORS.bin','')
-    OUTPUT_NAME = 'HPLS_' + DATASET + '_' + str(NUM_HASH) + '_' + str(TRAIN_SET_SIZE) + '_' + str(ITERATIONS)
-
+    OUTPUT_NAME = 'HFCN_' + DATASET + '_' + str(NUM_HASH) + '_' + str(TRAIN_SET_SIZE) + '_' + str(ITERATIONS)
+    
     cmcs = []
     prs = []
     rocs = []
     with Parallel(n_jobs=-2, verbose=11, backend='multiprocessing') as parallel_pool:
         for index in range(ITERATIONS):
             print('ITERATION #%s' % str(index+1))
-            cmc, pr, roc = hplsface(args, parallel_pool)
+            cmc, pr, roc = hfcnface(args, parallel_pool)
             cmcs.append(cmc)
             prs.append(pr)
             rocs.append(roc)
 
-            with open('./files/' + OUTPUT_NAME + '.file', 'w') as outfile:
+            with open('../files/plot_' + OUTPUT_NAME + '.file', 'w') as outfile:
                 pickle.dump([prs, rocs], outfile)
 
             plot_cmc_curve(cmcs, OUTPUT_NAME)
@@ -56,7 +59,7 @@ def main():
             # plot_roc_curve(rocs, OUTPUT_NAME)
 
 
-def hplsface(args, parallel_pool):
+def hfcnface(args, parallel_pool):
     PATH = str(args.path)
     DATASET = str(args.file)
     NUM_HASH = int(args.hash)
@@ -70,6 +73,7 @@ def hplsface(args, parallel_pool):
     matrix_y = []
     plotting_labels = []
     plotting_scores = []
+    models = []
     splits = []
     
     print('>> EXPLORING DATASET')
@@ -87,7 +91,7 @@ def hplsface(args, parallel_pool):
         sample_name = gallery_sample[1]
         sample_index = dataset_dict[sample_path]
         feature_vector = list_of_features[sample_index] 
-    
+
         matrix_x.append(feature_vector)
         matrix_y.append(sample_name)
 
@@ -100,26 +104,29 @@ def hplsface(args, parallel_pool):
     for index in range(0, NUM_HASH):
         splits.append(generate_pos_neg_dict(individuals))
 
-    print('>> LEARNING PLS MODELS:')
+    print('>> LEARNING FCN MODELS:')
     numpy_x = np.array(matrix_x)
     numpy_y = np.array(matrix_y)
     numpy_s = np.array(splits)
     models = parallel_pool(
-        delayed(learn_plsh_model) (numpy_x, numpy_y, split) for split in numpy_s
+        delayed(learn_fcn_model) (numpy_x, numpy_y, split) for split in numpy_s
     )
-  
+
     print('>> LOADING KNOWN PROBE: {0} samples'.format(len(known_test)))
     counterB = 0
     for probe_sample in known_test:
         sample_path = probe_sample[0]
         sample_name = probe_sample[1]
         sample_index = dataset_dict[sample_path]
-        feature_vector = list_of_features[sample_index] 
+        feature_vector = np.array(list_of_features[sample_index])
 
         vote_dict = dict(map(lambda vote: (vote, 0), individuals))
-        for model in models:
-            pos_list = [key for key, value in model[1].iteritems() if value == 1]
-            response = model[0].predict_confidence(feature_vector)
+        #print (vote_dict)
+        for k in range (0, len(models)):
+            pos_list = [key for key, value in models[k][1].iteritems() if value == 1]
+            pred = models[k][0].predict(feature_vector.reshape(1, feature_vector.shape[0]))
+            response = pred[0][1]
+            #print(response)
             for pos in pos_list:
                 vote_dict[pos] += response
         result = vote_dict.items()
@@ -130,7 +137,7 @@ def hplsface(args, parallel_pool):
                 if result[inner][0] == sample_name:
                     cmc_score[outer] += 1
                     break
-        
+
         counterB += 1
         denominator = np.absolute(np.mean([result[1][1], result[2][1]]))
         if denominator > 0:
@@ -155,4 +162,3 @@ def hplsface(args, parallel_pool):
 
 if __name__ == "__main__":
     main()
-    
