@@ -242,7 +242,8 @@ def plot_cmc_curve(cmc_scores, extra_name):
         x_axis = range(len(score))
         y_axis = score
         area = auc(x_axis, y_axis)/len(score)
-        plt.plot(x_axis, y_axis, lw=lw, color=color, label='CMC curve %d (area = %0.2f)' % (counter, area))
+        rank1 = score[0]
+        plt.plot(x_axis, y_axis, lw=lw, color=color, label='CMC curve %d (area = %0.2f, rank-1 = %0.2f)' % (counter, area, rank1))
         counter += 1
 
     plt.xlim([0, len(score)])

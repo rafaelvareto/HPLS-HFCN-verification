@@ -110,8 +110,8 @@ def hplsface(args, parallel_pool):
         matrix_x.append(feature_vector)
         matrix_y.append(sample_name)
     
-    print('>> SPLITTING POSITIVE/NEGATIVE SETS')
     individuals = list(set(matrix_y))
+    print('>> SPLITTING POSITIVE/NEGATIVE SETS: {0} subjects'.format(len(individuals)))
     cmc_score = np.zeros(len(individuals))
     for index in range(0, NUM_HASH):
         splits.append(generate_pos_neg_dict(individuals))

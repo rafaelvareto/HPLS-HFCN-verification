@@ -45,14 +45,15 @@ def main():
     with Parallel(n_jobs=-2, verbose=11, backend='multiprocessing') as parallel_pool:
         for index in range(ITERATIONS):
             print('ITERATION #%s' % str(index+1))
-            pr, roc = plshface(args, parallel_pool)
+            cmc, pr, roc = plshface(args, parallel_pool)
+            cmcs.append(cmc)
             prs.append(pr)
             rocs.append(roc)
 
             with open('../files/plot_' + OUTPUT_NAME + '.file', 'w') as outfile:
-                pickle.dump([prs, rocs], outfile)
+                pickle.dump([cmcs, prs, rocs], outfile)
 
-            plot_cmc_curve(cmcs, OUTPUT_NAME)
+            # plot_cmc_curve(cmcs, OUTPUT_NAME)
             plot_precision_recall(prs, OUTPUT_NAME)
             plot_roc_curve(rocs, OUTPUT_NAME)
 
@@ -94,9 +95,9 @@ def plshface(args, parallel_pool):
 
         counterA += 1
         print(counterA, sample_path, sample_name)
-    
-    print('>> SPLITTING POSITIVE/NEGATIVE SETS')
+
     individuals = list(set(matrix_y))
+    print('>> SPLITTING POSITIVE/NEGATIVE SETS: {0} subjects'.format(len(individuals)))
     cmc_score = np.zeros(len(individuals))
     for index in range(0, NUM_HASH):
         splits.append(generate_pos_neg_dict(individuals))

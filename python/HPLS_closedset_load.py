@@ -49,7 +49,7 @@ def main():
             rocs.append(roc)
 
             with open('./files/' + OUTPUT_NAME + '.file', 'w') as outfile:
-                pickle.dump([prs, rocs], outfile)
+                pickle.dump([cmcs, prs, rocs], outfile)
 
             plot_cmc_curve(cmcs, OUTPUT_NAME)
             # plot_precision_recall(prs, OUTPUT_NAME)
@@ -94,8 +94,8 @@ def hplsface(args, parallel_pool):
         counterA += 1
         print(counterA, sample_path, sample_name)
     
-    print('>> SPLITTING POSITIVE/NEGATIVE SETS')
     individuals = list(set(matrix_y))
+    print('>> SPLITTING POSITIVE/NEGATIVE SETS: {0} subjects'.format(len(individuals)))
     cmc_score = np.zeros(len(individuals))
     for index in range(0, NUM_HASH):
         splits.append(generate_pos_neg_dict(individuals))
