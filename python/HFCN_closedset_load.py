@@ -1,7 +1,7 @@
 from __future__ import print_function
 
 import os
-#os.environ["THEANO_FLAGS"] = "device=gpu0"
+os.environ["THEANO_FLAGS"] = "device=gpu0"
 
 import argparse
 import cv2 as cv
