@@ -43,7 +43,7 @@ def main():
     NUM_HASH = int(args.hash)
     
     DATASET = DATASET.replace('.txt','')
-    OUTPUT_NAME = 'HPLS_' + DATASET + '_' + DESCRIPTOR + '_' + str(NUM_HASH) + '_' + str(KNOWN_SET_SIZE) + '_' + str(TRAIN_SET_SIZE) + '_' + str(ITERATIONS)
+    OUTPUT_NAME = 'HPLS_OPEN_' + DATASET + '_' + DESCRIPTOR + '_' + str(NUM_HASH) + '_' + str(KNOWN_SET_SIZE) + '_' + str(TRAIN_SET_SIZE) + '_' + str(ITERATIONS)
 
     prs = []
     rocs = []

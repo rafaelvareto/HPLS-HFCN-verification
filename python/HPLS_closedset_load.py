@@ -35,7 +35,7 @@ def main():
     TRAIN_SET_SIZE = float(args.train_set_size)
     NUM_HASH = int(args.hash)
     DATASET = DATASET.replace('-FEATURE-VECTORS.bin','')
-    OUTPUT_NAME = 'HPLS_' + DATASET + '_' + str(NUM_HASH) + '_' + str(TRAIN_SET_SIZE) + '_' + str(ITERATIONS)
+    OUTPUT_NAME = 'HPLS_CLOSED_' + DATASET + '_' + str(NUM_HASH) + '_' + str(TRAIN_SET_SIZE) + '_' + str(ITERATIONS)
 
     cmcs = []
     prs = []

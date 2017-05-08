@@ -42,7 +42,7 @@ def main():
     TRAIN_SET_SIZE = float(args.train_set_size)
 
     DATASET = DATASET.replace('.txt','')
-    OUTPUT_NAME = 'HPLS_' + DATASET + '_' + DESCRIPTOR + '_' + str(NUM_HASH) + '_' + str(TRAIN_SET_SIZE) + '_' + str(ITERATIONS)
+    OUTPUT_NAME = 'HPLS_CLOSED_' + DATASET + '_' + DESCRIPTOR + '_' + str(NUM_HASH) + '_' + str(TRAIN_SET_SIZE) + '_' + str(ITERATIONS)
 
     cmc_values = []
     for index in range(ITERATIONS):
