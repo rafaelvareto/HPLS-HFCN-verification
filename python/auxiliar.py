@@ -1,17 +1,9 @@
 import cv2 as cv
-import keras
 import matplotlib
 import numpy as np
 import random
 
 matplotlib.use('Agg')
-
-from keras.datasets import mnist
-from keras.layers import Dense, Dropout
-from keras.models import Sequential
-from keras.optimizers import RMSprop
-from keras.utils import np_utils
-from keras import callbacks
 
 from itertools import cycle
 from matplotlib import colors as mcolors
@@ -59,22 +51,21 @@ def split_train_test_samples(complete_tuple_list, train_set_samples=4):
         else:
             tuple_dict[label] = [path]
 
-    for tuple in tuple_dict.iteritems():
-        assert len(tuple[1]) > train_set_samples
+    # for tuple in tuple_dict.iteritems():
+    #     assert len(tuple[1]) > train_set_samples
     
     test_set = []
     train_set = []
     for (label, paths) in tuple_dict.iteritems():
         for path in paths[0:train_set_samples]:
             train_set.append((path, label))
-        for path in paths[train_set_samples:len(paths)]:
+        for path in paths[train_set_samples:len(paths)]: 
             test_set.append((path, label))
 
     return train_set, test_set
 
 
 def split_train_test_sets(complete_tuple_list, train_set_size=0.5):
-    print('split_train_test_sets')
     from sklearn.model_selection import train_test_split
     labels = []
     paths = []
@@ -138,6 +129,13 @@ def split_into_chunks(full_list, num_chunks):
 
 
 def getModel(input_shape, nclasses=2):
+    import keras
+    from keras.datasets import mnist
+    from keras.layers import Dense, Dropout
+    from keras.models import Sequential
+    from keras.optimizers import RMSprop
+    from keras import callbacks
+
     model = Sequential()
     model.add(Dense(64, activation='relu', input_shape=input_shape))
     model.add(Dropout(0.2))
@@ -149,6 +147,10 @@ def getModel(input_shape, nclasses=2):
 
 
 def learn_fcn_model(X, Y, split):
+    import keras
+    from keras.utils import np_utils
+    from keras import callbacks
+
     boolean_label = [(split[key]+1)/2 for key in Y]
     y_train = np_utils.to_categorical(boolean_label, 2)
     

@@ -21,7 +21,7 @@ from pls_classifier import PLSClassifier
 
 parser = argparse.ArgumentParser(description='HPLS for Face Recognition with NO Feature Extraction')
 parser.add_argument('-p', '--path', help='Path do binary feature file', required=False, default='./features/')
-parser.add_argument('-f', '--file', help='Input binary feature file name', required=False, default='FRGC-SET-X-HOG-VECTORS.bin')
+parser.add_argument('-f', '--file', help='Input binary feature file name', required=False, default='LFW-DEEP-FEATURE-VECTORS.bin')
 parser.add_argument('-r', '--rept', help='Number of executions', required=False, default=1)
 parser.add_argument('-m', '--hash', help='Number of hash functions', required=False, default=100)
 parser.add_argument('-ks', '--known_set_size', help='Default size of enrolled subjects', required=False, default=0.5)

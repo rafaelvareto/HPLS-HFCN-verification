@@ -21,7 +21,7 @@ from pls_classifier import PLSClassifier
 
 parser = argparse.ArgumentParser(description='HPLS for Face Recognition with NO Feature Extraction')
 parser.add_argument('-p', '--path', help='Path do binary feature file', required=False, default='../features/')
-parser.add_argument('-f', '--file', help='Input binary feature file name', required=False, default='FRGC-SET-4-DEEP-FEATURE-VECTORS.bin')
+parser.add_argument('-f', '--file', help='Input binary feature file name', required=False, default='LFW-DEEP-FEATURE-VECTORS.bin')
 parser.add_argument('-r', '--rept', help='Number of executions', required=False, default=1)
 parser.add_argument('-m', '--hash', help='Number of hash functions', required=False, default=100)
 parser.add_argument('-ts', '--train_set_size', help='Default size of training subset', required=False, default=0.5)
@@ -75,7 +75,7 @@ def hplsface(args, parallel_pool):
     print('>> EXPLORING DATASET')
     dataset_dict = {value:index for index,value in enumerate(list_of_paths)}
     dataset_list = zip(list_of_paths, list_of_labels)
-    if TRAIN_SET_SIZE > 1.0:
+    if TRAIN_SET_SIZE >= 1.0:
         known_train, known_test = split_train_test_samples(dataset_list, train_set_samples=int(TRAIN_SET_SIZE))
     else:
         known_train, known_test = split_train_test_sets(dataset_list, train_set_size=TRAIN_SET_SIZE)
@@ -116,32 +116,35 @@ def hplsface(args, parallel_pool):
         sample_index = dataset_dict[sample_path]
         feature_vector = list_of_features[sample_index] 
 
-        vote_dict = dict(map(lambda vote: (vote, 0), individuals))
-        for model in models:
-            pos_list = [key for key, value in model[1].iteritems() if value == 1]
-            response = model[0].predict_confidence(feature_vector)
-            for pos in pos_list:
-                vote_dict[pos] += response
-        result = vote_dict.items()
-        result.sort(key=lambda tup: tup[1], reverse=True)
+        if len(feature_vector) > 1:
+            vote_dict = dict(map(lambda vote: (vote, 0), individuals))
+            for model in models:
+                pos_list = [key for key, value in model[1].iteritems() if value == 1]
+                response = model[0].predict_confidence(feature_vector)
+                for pos in pos_list:
+                    vote_dict[pos] += response
+            result = vote_dict.items()
+            result.sort(key=lambda tup: tup[1], reverse=True)
 
-        for outer in range(len(individuals)):
-            for inner in range(outer + 1):
-                if result[inner][0] == sample_name:
-                    cmc_score[outer] += 1
-                    break
-        
-        counterB += 1
-        denominator = np.absolute(np.mean([result[1][1], result[2][1]]))
-        if denominator > 0:
-            output = result[0][1] / denominator
+            for outer in range(len(individuals)):
+                for inner in range(outer + 1):
+                    if result[inner][0] == sample_name:
+                        cmc_score[outer] += 1
+                        break
+            
+            counterB += 1
+            denominator = np.absolute(np.mean([result[1][1], result[2][1]]))
+            if denominator > 0:
+                output = result[0][1] / denominator
+            else:
+                output = result[0][1]
+            print(counterB, sample_name, result[0][0], output)
+
+            # Getting known set plotting relevant information
+            plotting_labels.append([(sample_name, 1)])
+            plotting_scores.append([(sample_name, output)])
         else:
-            output = result[0][1]
-        print(counterB, sample_name, result[0][0], output)
-
-        # Getting known set plotting relevant information
-        plotting_labels.append([(sample_name, 1)])
-        plotting_scores.append([(sample_name, output)])
+            print('EMPTY FEATURE VECTOR')
 
     del models[:]
     del list_of_paths[:]

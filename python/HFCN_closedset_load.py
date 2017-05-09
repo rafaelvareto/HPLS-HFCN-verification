@@ -1,11 +1,12 @@
 from __future__ import print_function
 
 import os
-os.environ["THEANO_FLAGS"] = "device=gpu0"
+# os.environ["THEANO_FLAGS"] = "device=gpu0"
 
 import argparse
 import cv2 as cv
 import itertools
+import keras
 import matplotlib
 import numpy as np
 import pickle
@@ -24,7 +25,7 @@ from matplotlib import pyplot
 
 parser = argparse.ArgumentParser(description='HFCN for Face Recognition with NO Feature Extraction')
 parser.add_argument('-p', '--path', help='Path do binary feature file', required=False, default='../features/')
-parser.add_argument('-f', '--file', help='Input binary feature file name', required=False, default='FRGC-SET-4-DEEP-FEATURE-VECTORS.bin')
+parser.add_argument('-f', '--file', help='Input binary feature file name', required=False, default='LFW-DEEP-FEATURE-VECTORS.bin')
 parser.add_argument('-r', '--rept', help='Number of executions', required=False, default=1)
 parser.add_argument('-m', '--hash', help='Number of hash functions', required=False, default=100)
 parser.add_argument('-ts', '--train_set_size', help='Default size of training subset', required=False, default=0.5)
@@ -111,6 +112,7 @@ def hfcnface(args, parallel_pool):
     models = parallel_pool(
         delayed(learn_fcn_model) (numpy_x, numpy_y, split) for split in numpy_s
     )
+    # models = [learn_fcn_model(numpy_x, numpy_y, split) for split in numpy_s]
 
     print('>> LOADING KNOWN PROBE: {0} samples'.format(len(known_test)))
     counterB = 0
