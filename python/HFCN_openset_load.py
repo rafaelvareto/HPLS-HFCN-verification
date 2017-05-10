@@ -9,26 +9,17 @@ import pickle
 
 matplotlib.use('Agg')
 
-from auxiliar import generate_cmc_curve
 from auxiliar import generate_pos_neg_dict
 from auxiliar import generate_precision_recall, plot_precision_recall
 from auxiliar import generate_roc_curve, plot_roc_curve
-from auxiliar import learn_plsh_model
+from auxiliar import plot_cmc_curve
+from auxiliar import learn_fcn_model
 from auxiliar import load_txt_file
-from auxiliar import split_known_unknown_sets, split_train_test_sets
+from auxiliar import split_known_unknown_sets, split_train_test_sets, split_train_test_samples
 from joblib import Parallel, delayed
 from matplotlib import pyplot
-from pls_classifier import PLSClassifier
 
-import keras
-from keras.datasets import mnist
-from keras.models import Sequential
-from keras.layers import Dense, Dropout
-from keras.optimizers import RMSprop
-from keras.utils import np_utils
-from keras import callbacks
-
-parser = argparse.ArgumentParser(description='PLSH for Face Recognition with NO Feature Extraction')
+parser = argparse.ArgumentParser(description='HFCN for Face Recognition with NO Feature Extraction')
 parser.add_argument('-p', '--path', help='Path do binary feature file', required=False, default='./features/')
 parser.add_argument('-f', '--file', help='Input binary feature file name', required=False, default='FRGC-SET-4-DEEP-FEATURE-VECTORS.bin')
 parser.add_argument('-r', '--rept', help='Number of executions', required=False, default=1)
@@ -43,46 +34,28 @@ def main():
     DATASET = str(args.file)
     ITERATIONS = int(args.rept)
     KNOWN_SET_SIZE = float(args.known_set_size)
+    TRAIN_SET_SIZE = float(args.train_set_size)
     NUM_HASH = int(args.hash)
-    OUTPUT_NAME = DATASET.replace('.bin','') + '_' + str(NUM_HASH) + '_' + str(KNOWN_SET_SIZE) + '_' + str(ITERATIONS)
+    DATASET = DATASET.replace('.bin','')
+    OUTPUT_NAME = 'HFCN_' + DATASET + '_' + str(NUM_HASH) +  '_' + str(KNOWN_SET_SIZE) + '_' + str(TRAIN_SET_SIZE) + '_' + str(ITERATIONS)
 
+    cmcs = []
     prs = []
     rocs = []
-
     with Parallel(n_jobs=-2, verbose=11, backend='multiprocessing') as parallel_pool:
         for index in range(ITERATIONS):
             print('ITERATION #%s' % str(index+1))
-            pr, roc = plshface(args, parallel_pool)
+            cmc, pr, roc = plshface(args, parallel_pool)
+            cmcs.append(cmc)
             prs.append(pr)
             rocs.append(roc)
 
             with open('../files/plot_' + OUTPUT_NAME + '.file', 'w') as outfile:
-                pickle.dump([prs, rocs], outfile)
+                pickle.dump([cmcs, prs, rocs], outfile)
 
+            # plot_cmc_curve(cmcs, OUTPUT_NAME)
             plot_precision_recall(prs, OUTPUT_NAME)
             plot_roc_curve(rocs, OUTPUT_NAME)
-    
-
-def getModel(input_shape,nclasses=2):
-
-    model = Sequential()
-    model.add(Dense(64, activation='relu', input_shape=input_shape))
-    model.add(Dropout(0.2))
-    model.add(Dense(nclasses, activation='softmax'))
-
-    #model.summary()
-    model.compile(loss='categorical_crossentropy', optimizer='adadelta', metrics=['accuracy'])#RMSprop()
-
-    return model
-
-def learn_fc_model(X, Y, split):
-    boolean_label = [(split[key]+1)/2 for key in Y]
-    y_train = np_utils.to_categorical(boolean_label, 2)
-    model = getModel(input_shape=X[0].shape)
-
-    model.fit(X, y_train, batch_size=40, nb_epoch=100, verbose=0)
-
-    return (model, split)
 
 
 def plshface(args, parallel_pool):
@@ -122,9 +95,9 @@ def plshface(args, parallel_pool):
 
         counterA += 1
         print(counterA, sample_path, sample_name)
-    
-    print('>> SPLITTING POSITIVE/NEGATIVE SETS')
+
     individuals = list(set(matrix_y))
+    print('>> SPLITTING POSITIVE/NEGATIVE SETS: {0} subjects'.format(len(individuals)))
     cmc_score = np.zeros(len(individuals))
     for index in range(0, NUM_HASH):
         splits.append(generate_pos_neg_dict(individuals))
@@ -133,8 +106,7 @@ def plshface(args, parallel_pool):
     numpy_x = np.array(matrix_x)
     numpy_y = np.array(matrix_y)
     numpy_s = np.array(splits)
-
-    models = [learn_fc_model(numpy_x, numpy_y, split) for split in numpy_s]
+    models = [learn_fcn_model(numpy_x, numpy_y, split) for split in numpy_s]
 
     print('>> LOADING KNOWN PROBE: {0} samples'.format(len(known_test)))
     counterB = 0
@@ -205,17 +177,15 @@ def plshface(args, parallel_pool):
         plotting_labels.append([(sample_name, -1)])
         plotting_scores.append([(sample_name, output)])
 
-    # cmc_score_norm = np.divide(cmc_score, counterA)
-    # generate_cmc_curve(cmc_score_norm, DATASET + '_' + str(NUM_HASH) + '_' + DESCRIPTOR)
-
     del models[:]
     del list_of_paths[:]
     del list_of_labels[:]
     del list_of_features[:]
     
+    cmc = np.divide(cmc_score, counterB) 
     pr = generate_precision_recall(plotting_labels, plotting_scores)
     roc = generate_roc_curve(plotting_labels, plotting_scores)
-    return pr, roc
+    return cmc, pr, roc
 
 if __name__ == "__main__":
     main()

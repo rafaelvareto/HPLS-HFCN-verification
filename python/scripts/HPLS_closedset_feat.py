@@ -21,7 +21,7 @@ from pls_classifier import PLSClassifier
 from vggface import VGGFace
 
 
-parser = argparse.ArgumentParser(description='PLSH for Face Recognition')
+parser = argparse.ArgumentParser(description='HPLS for Face Recognition with Feature Extraction')
 parser.add_argument('-p', '--path', help='Path do dataset', required=False, default='./frgcv1/')
 parser.add_argument('-f', '--file', help='Input file name', required=False, default='train_2_small.txt')
 parser.add_argument('-d', '--desc', help='Descriptor [hog/df]', required=False, default='hog')
@@ -42,12 +42,12 @@ def main():
     TRAIN_SET_SIZE = float(args.train_set_size)
 
     DATASET = DATASET.replace('.txt','')
-    OUTPUT_NAME = 'PLSH_' + DATASET + '_' + DESCRIPTOR + '_' + str(NUM_HASH) + '_' + str(TRAIN_SET_SIZE) + '_' + str(ITERATIONS)
+    OUTPUT_NAME = 'HPLS_CLOSED_' + DATASET + '_' + DESCRIPTOR + '_' + str(NUM_HASH) + '_' + str(TRAIN_SET_SIZE) + '_' + str(ITERATIONS)
 
     cmc_values = []
     for index in range(ITERATIONS):
         print('ITERATION #%s' % str(index+1))
-        cmc = plshface(args)
+        cmc = hplsface(args)
         cmc_values.append(cmc)
 
         with open('./files/' + OUTPUT_NAME + '.file', 'w') as outfile:
@@ -56,7 +56,7 @@ def main():
         generate_cmc_curve(cmc_values, OUTPUT_NAME)
     
 
-def plshface(args):
+def hplsface(args):
     PATH = str(args.path)
     DATASET = str(args.file)
     DESCRIPTOR = str(args.desc)
@@ -101,8 +101,8 @@ def plshface(args):
         counterA += 1
         print(counterA, sample_path, sample_name)
     
-    print('>> SPLITTING POSITIVE/NEGATIVE SETS')
     individuals = list(set(matrix_y))
+    print('>> SPLITTING POSITIVE/NEGATIVE SETS: {0} subjects'.format(len(individuals)))
     cmc_score = np.zeros(len(individuals))
     for index in range(0, NUM_HASH):
         splits.append(generate_pos_neg_dict(individuals))

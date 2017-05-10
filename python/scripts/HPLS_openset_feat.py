@@ -20,7 +20,7 @@ from matplotlib import pyplot
 from pls_classifier import PLSClassifier
 
 
-parser = argparse.ArgumentParser(description='PLSH for Face Recognition')
+parser = argparse.ArgumentParser(description='HPLS for Face Recognition with Feature Extraction')
 parser.add_argument('-p', '--path', help='Path do dataset', required=False, default='./frgcv1/')
 parser.add_argument('-f', '--file', help='Input file name', required=False, default='train_2_small.txt')
 parser.add_argument('-d', '--desc', help='Descriptor [hog/df]', required=False, default='hog')
@@ -43,14 +43,14 @@ def main():
     NUM_HASH = int(args.hash)
     
     DATASET = DATASET.replace('.txt','')
-    OUTPUT_NAME = 'HPLS_' + DATASET + '_' + DESCRIPTOR + '_' + str(NUM_HASH) + '_' + str(KNOWN_SET_SIZE) + '_' + str(TRAIN_SET_SIZE) + '_' + str(ITERATIONS)
+    OUTPUT_NAME = 'HPLS_OPEN_' + DATASET + '_' + DESCRIPTOR + '_' + str(NUM_HASH) + '_' + str(KNOWN_SET_SIZE) + '_' + str(TRAIN_SET_SIZE) + '_' + str(ITERATIONS)
 
     prs = []
     rocs = []
     with Parallel(n_jobs=-2, verbose=11, backend='multiprocessing') as parallel_pool:
         for index in range(ITERATIONS):
             print('ITERATION #%s' % str(index+1))
-            pr, roc = plshface(args, parallel_pool)
+            pr, roc = hplsface(args, parallel_pool)
             prs.append(pr)
             rocs.append(roc)
 
@@ -59,9 +59,9 @@ def main():
 
             plot_precision_recall(prs, OUTPUT_NAME)
             plot_roc_curve(rocs, OUTPUT_NAME)
-    
 
-def plshface(args, parallel_pool):
+
+def hplsface(args, parallel_pool):
     PATH = str(args.path)
     DATASET = str(args.file)
     DESCRIPTOR = str(args.desc)
@@ -110,8 +110,8 @@ def plshface(args, parallel_pool):
         matrix_x.append(feature_vector)
         matrix_y.append(sample_name)
     
-    print('>> SPLITTING POSITIVE/NEGATIVE SETS')
     individuals = list(set(matrix_y))
+    print('>> SPLITTING POSITIVE/NEGATIVE SETS: {0} subjects'.format(len(individuals)))
     cmc_score = np.zeros(len(individuals))
     for index in range(0, NUM_HASH):
         splits.append(generate_pos_neg_dict(individuals))

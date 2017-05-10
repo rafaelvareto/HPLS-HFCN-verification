@@ -1,23 +1,21 @@
-import sys
-sys.path.append('../')
+import os
+# os.environ["THEANO_FLAGS"] = "device=gpu0"
 
 import argparse
 import cv2 as cv
 import numpy as np
 import pickle
+import sys
 
-from auxiliar import load_txt_file
-from auxiliar import split_known_unknown_sets
+sys.path.append('../')
 from descriptor import Descriptor
 
 parser = argparse.ArgumentParser(description='Feature Extraction')
-parser.add_argument('-p', '--path', help='Path do dataset', required=False, default='../datasets/frgcv1/')
-parser.add_argument('-f', '--file', help='Input file name', required=False, default='train_2_small.txt')
+parser.add_argument('-p', '--path', help='Path do dataset', required=False, default='./fgnet_mf/')
+parser.add_argument('-f', '--file', help='Input file name', required=False, default='fgnet_set.txt')
 parser.add_argument('-d', '--desc', help='Descriptor [hog/df]', required=False, default='hog')
 parser.add_argument('-iw', '--width', help='Default image width', required=False, default=128)
 parser.add_argument('-ih', '--height', help='Default image height', required=False, default=144)
-parser.add_argument('-ks', '--known_set_size', help='Default size of enrolled subjects', required=False, default=0.5)
-parser.add_argument('-ts', '--train_set_size', help='Default size of training subset', required=False, default=0.5)
 args = parser.parse_args()
 
 
@@ -25,8 +23,7 @@ def main():
     PATH = str(args.path)
     DATASET = str(args.file)
     DESCRIPTOR = str(args.desc)
-    KNOWN_SET_SIZE = float(args.known_set_size)
-    OUTPUT_NAME = 'features_' + DATASET.replace('.txt','') + '_' + DESCRIPTOR + '_' + str(KNOWN_SET_SIZE)
+    OUTPUT_NAME = 'features_' + DESCRIPTOR + '_' + DATASET.replace('.txt','.bin')
 
     print('EXTRACTING FEATURES')
     dataset_list = load_txt_file(PATH + DATASET)
@@ -34,8 +31,18 @@ def main():
     
     print('SAVING TO FILE')
     outmatrix = [feat_z, feat_y, feat_x]
-    with open(OUTPUT_NAME + '.bin', 'wb') as outfile:
+    with open(OUTPUT_NAME, 'wb') as outfile:
         pickle.dump(outmatrix, outfile, protocol=pickle.HIGHEST_PROTOCOL)
+
+
+def load_txt_file(file_name):
+    this_file = open(file_name, 'r')
+    this_list = []
+    for line in this_file:
+        line = line.rstrip()
+        components = line.split()
+        this_list.append(components)
+    return this_list
 
 
 def extract_features(arguments, dataset_list):
@@ -44,8 +51,6 @@ def extract_features(arguments, dataset_list):
     DESCRIPTOR = str(arguments.desc)
     IMG_WIDTH = int(arguments.width)
     IMG_HEIGHT = int(arguments.height)
-    KNOWN_SET_SIZE = float(arguments.known_set_size)
-    TRAIN_SET_SIZE = float(arguments.train_set_size)
 
     matrix_x = []
     matrix_y = []
@@ -75,7 +80,7 @@ def extract_features(arguments, dataset_list):
         matrix_z.append(sample_path)
         
         counterA += 1
-        print(counterA, sample_path, sample_name)
+        print(counterA, sample_path, sample_name, len(feature_vector))
 
     return matrix_z, matrix_y, matrix_x
 

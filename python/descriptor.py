@@ -1,7 +1,10 @@
 import copy
 import cv2 as cv
 import math
+import matplotlib
 import numpy as np
+
+matplotlib.use('Agg')
 
 from matplotlib import pyplot as plt
 from scipy import misc
