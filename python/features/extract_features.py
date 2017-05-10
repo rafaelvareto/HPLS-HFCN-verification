@@ -1,11 +1,13 @@
 import os
-os.environ["THEANO_FLAGS"] = "device=gpu0"
+# os.environ["THEANO_FLAGS"] = "device=gpu0"
 
 import argparse
 import cv2 as cv
 import numpy as np
 import pickle
+import sys
 
+sys.path.append('../')
 from descriptor import Descriptor
 
 parser = argparse.ArgumentParser(description='Feature Extraction')

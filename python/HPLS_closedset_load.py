@@ -15,7 +15,6 @@ from auxiliar import learn_plsh_model
 from auxiliar import load_txt_file
 from auxiliar import split_known_unknown_sets, split_train_test_sets, split_train_test_samples
 from joblib import Parallel, delayed
-from matplotlib import pyplot
 from pls_classifier import PLSClassifier
 
 
