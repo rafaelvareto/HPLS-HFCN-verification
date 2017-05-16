@@ -11,9 +11,9 @@ sys.path.append('../')
 from descriptor import Descriptor
 
 parser = argparse.ArgumentParser(description='Feature Extraction')
-parser.add_argument('-p', '--path', help='Path do dataset', required=False, default='./fgnet_mf/')
-parser.add_argument('-f', '--file', help='Input file name', required=False, default='fgnet_set.txt')
-parser.add_argument('-d', '--desc', help='Descriptor [hog/df]', required=False, default='hog')
+parser.add_argument('-p', '--path', help='Path do dataset', required=False, default='/Users/vareto/Downloads/PubFig/dev_cropped/')
+parser.add_argument('-f', '--file', help='Input file name', required=False, default='dev_set.txt')
+parser.add_argument('-d', '--desc', help='Descriptor [hog/df]', required=False, default='df')
 parser.add_argument('-iw', '--width', help='Default image width', required=False, default=128)
 parser.add_argument('-ih', '--height', help='Default image height', required=False, default=144)
 args = parser.parse_args()
@@ -63,24 +63,27 @@ def extract_features(arguments, dataset_list):
 
     counterA = 0
     for sample in dataset_list:
-        sample_path = sample[0]
-        sample_name = sample[1]
+        try:
+            sample_path = sample[0]
+            sample_name = sample[1]
+            subject_path = PATH + sample_path
+            subject_image = cv.imread(subject_path, cv.IMREAD_COLOR)
 
-        subject_path = PATH + sample_path
-        subject_image = cv.imread(subject_path, cv.IMREAD_COLOR)
+            if DESCRIPTOR == 'hog':
+                subject_image = cv.resize(subject_image, (IMG_HEIGHT, IMG_WIDTH))
+                feature_vector = Descriptor.get_hog(subject_image)
+            elif DESCRIPTOR == 'df':
+                feature_vector = Descriptor.get_deep_feature(subject_image, vgg_model, layer_name='fc6')
 
-        if DESCRIPTOR == 'hog':
-            subject_image = cv.resize(subject_image, (IMG_HEIGHT, IMG_WIDTH))
-            feature_vector = Descriptor.get_hog(subject_image)
-        elif DESCRIPTOR == 'df':
-            feature_vector = Descriptor.get_deep_feature(subject_image, vgg_model, layer_name='fc6')
+            matrix_x.append(feature_vector)
+            matrix_y.append(sample_name)
+            matrix_z.append(sample_path)
+            
+            print(counterA, sample_path, sample_name, len(feature_vector))
 
-        matrix_x.append(feature_vector)
-        matrix_y.append(sample_name)
-        matrix_z.append(sample_path)
-        
+        except Exception, e:
+            print(counterA, sample_path + ' not loaded', str(e))
         counterA += 1
-        print(counterA, sample_path, sample_name, len(feature_vector))
 
     return matrix_z, matrix_y, matrix_x
 
