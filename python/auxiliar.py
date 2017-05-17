@@ -40,7 +40,6 @@ def split_known_unknown_sets(complete_tuple_list, known_set_size=0.5):
 
 
 def split_train_test_samples(complete_tuple_list, train_set_samples=4):
-    print('split_train_test_samples')
     to_shuffle = [item for item in complete_tuple_list]
     np.random.shuffle(to_shuffle)
 
@@ -121,9 +120,9 @@ def generate_pos_neg_dict(labels):
     return full_dict
 
 
-def split_into_chunks(full_tuple, num_models=100, num_subjects=50):
-    negative_list = []
-    positive_list = []
+def split_into_chunks(full_tuple, num_models=100, num_subjects=100):
+    neg_split = []
+    pos_split = []
     
     tuple_dict = dict()
     for (path, label) in full_tuple:
@@ -132,16 +131,26 @@ def split_into_chunks(full_tuple, num_models=100, num_subjects=50):
         else:
             tuple_dict[label] = [path]
     
-    individuals = list(set(tuple_dict.keys()))
-    for outer in range(num_models):
-        pos_labels = random.sample(individuals, num_subjects)
-        neg_labels = random.sample(individuals, num_subjects)
-
-        for pos in pos_labels:
-            # Continuar aqui
-    # for outer in range(num_models):
-    #     for inner in range(num_subjects):
-    #         print(outer,inner)
+    individuals = []
+    while len(individuals) < num_subjects:
+        individuals.extend(tuple_dict.keys())
+    
+    for index in range(num_models):
+        neg_list = []
+        pos_list = []
+        for pos in random.sample(individuals, num_subjects):
+            candidates = tuple(random.sample(tuple_dict[pos], 2))
+            pos_list.append(candidates)
+        for neg_index in range(num_subjects):
+            chosen = random.sample(tuple_dict.keys(), 2)
+            candidate_a = random.sample(tuple_dict[chosen[0]], 1)
+            candidate_b = random.sample(tuple_dict[chosen[1]], 1)
+            neg_list.append((candidate_a[0], candidate_b[0]))
+        
+        pos_split.append(pos_list)
+        neg_split.append(neg_list)
+    
+    return pos_split, neg_split
 
 
 def getModel(input_shape, nclasses=2):
@@ -180,6 +189,31 @@ def learn_plsh_model(matrix_x, matrix_y, split):
     boolean_label = [split[key] for key in matrix_y]
     model = classifier.fit(np.array(matrix_x), np.array(boolean_label))
     return (model, split)
+
+
+def learn_plsh_v_model(features, dictionary, pos_split, neg_split):
+    print('learn_plsh_v_model')
+    matrix_x = []
+    matrix_y = []
+    matrix_s = []
+
+    for pos in pos_split:
+        index_a = dictionary[pos[0]]
+        index_b = dictionary[pos[1]]
+        diff_feat = np.absolute(np.subtract(features[index_a], features[index_b]))
+        matrix_x.append(diff_feat)
+        matrix_y.append(1)
+        
+    for neg in neg_split:
+        index_a = dictionary[neg[0]]
+        index_b = dictionary[neg[1]]
+        diff_feat = np.absolute(np.subtract(features[index_a], features[index_b]))
+        matrix_x.append(diff_feat)
+        matrix_y.append(0)
+
+    classifier = PLSClassifier()
+    model = classifier.fit(np.array(matrix_x), np.array(matrix_y))
+    return (model, (pos_split, neg_split))
 
 
 def generate_probe_histogram(individuals, values, extra_name):
@@ -310,7 +344,7 @@ def plot_roc_curve(rocs, extra_name=None):
     color_names = [name for name, color in color_dict.items()]
     colors = cycle(color_names)
     lw = 2
-
+    
     # Plot Receiver Operating Characteristic curve
     plt.clf()
     for index, color in zip(range(len(rocs)), colors):

@@ -11,7 +11,7 @@ from auxiliar import generate_pos_neg_dict
 from auxiliar import generate_precision_recall, plot_precision_recall
 from auxiliar import generate_roc_curve, plot_roc_curve
 from auxiliar import plot_cmc_curve
-from auxiliar import learn_plsh_model
+from auxiliar import learn_plsh_model, learn_plsh_v_model
 from auxiliar import load_txt_file
 from auxiliar import split_into_chunks
 from joblib import Parallel, delayed
@@ -71,19 +71,21 @@ def hplsfacev(args, parallel_pool):
     splits = []
     
     print('>> EXPLORING DATASET')
-    individuals = list(set(list_of_labels))
-    paths_dict = {value:index for index,value in enumerate(list_of_paths)}
+    train_dict = {value:index for index,value in enumerate(list_of_paths)}
     train_list = zip(list_of_paths, list_of_labels)
+    pos_splits, neg_splits = split_into_chunks(train_list, NUM_HASH)
 
-    split_into_chunks(train_list)
+    print('>> LEARNING PLS MODELS:')
+    models = [learn_plsh_v_model(list_of_features, train_dict, pos_s, neg_s) for (pos_s, neg_s) in zip(pos_splits, neg_splits)]
+    print('DONE')
     raw_input('')
 
-    print('>> LOADING TRAINING TUPLES: {0} samples'.format(len(known_train)))
+    print('>> LOADING TRAINING TUPLES: {0} splits'.format(len(known_train)))
     counterA = 0
     for train_sample in train_list:
         sample_path = train_sample[0]
         sample_name = train_sample[1]
-        sample_index = paths_dict[sample_path]
+        sample_index = train_dict[sample_path]
         feature_vector = list_of_features[sample_index] 
     
         matrix_x.append(feature_vector)
@@ -92,6 +94,7 @@ def hplsfacev(args, parallel_pool):
         counterA += 1
         print(counterA, sample_path, sample_name)
     
+    individuals = list(set(list_of_labels))
     print('>> SPLITTING POSITIVE/NEGATIVE SETS: {0} subjects'.format(len(individuals)))
     cmc_score = np.zeros(len(individuals))
     for index in range(0, NUM_HASH):
@@ -110,7 +113,7 @@ def hplsfacev(args, parallel_pool):
     for probe_sample in known_test:
         sample_path = probe_sample[0]
         sample_name = probe_sample[1]
-        sample_index = paths_dict[sample_path]
+        sample_index = train_dict[sample_path]
         feature_vector = list_of_features[sample_index] 
 
         if len(feature_vector) > 1:
@@ -152,6 +155,7 @@ def hplsfacev(args, parallel_pool):
     pr = generate_precision_recall(plotting_labels, plotting_scores)
     roc = generate_roc_curve(plotting_labels, plotting_scores)
     return cmc, pr, roc
+
 
 if __name__ == "__main__":
     main()
