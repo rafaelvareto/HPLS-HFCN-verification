@@ -13,7 +13,7 @@ from auxiliar import generate_roc_curve, plot_roc_curve
 from auxiliar import plot_cmc_curve
 from auxiliar import learn_plsh_model
 from auxiliar import load_txt_file
-from auxiliar import split_known_unknown_sets, split_train_test_sets, split_train_test_samples
+from auxiliar import split_into_chunks
 from joblib import Parallel, delayed
 from pls_classifier import PLSClassifier
 
@@ -63,7 +63,6 @@ def hplsfacev(args, parallel_pool):
     print('>> LOADING FEATURES FROM FILE')
     with open(PATH + DATASET, 'rb') as input_file:
         list_of_paths, list_of_labels, list_of_features = pickle.load(input_file)
-    print list_of_labels
 
     matrix_x = []
     matrix_y = []
@@ -72,15 +71,19 @@ def hplsfacev(args, parallel_pool):
     splits = []
     
     print('>> EXPLORING DATASET')
-    train_dict = {value:index for index,value in enumerate(list_of_paths)}
+    individuals = list(set(list_of_labels))
+    paths_dict = {value:index for index,value in enumerate(list_of_paths)}
     train_list = zip(list_of_paths, list_of_labels)
+
+    split_into_chunks(train_list)
+    raw_input('')
 
     print('>> LOADING TRAINING TUPLES: {0} samples'.format(len(known_train)))
     counterA = 0
     for train_sample in train_list:
         sample_path = train_sample[0]
         sample_name = train_sample[1]
-        sample_index = train_dict[sample_path]
+        sample_index = paths_dict[sample_path]
         feature_vector = list_of_features[sample_index] 
     
         matrix_x.append(feature_vector)
@@ -89,7 +92,6 @@ def hplsfacev(args, parallel_pool):
         counterA += 1
         print(counterA, sample_path, sample_name)
     
-    individuals = list(set(matrix_y))
     print('>> SPLITTING POSITIVE/NEGATIVE SETS: {0} subjects'.format(len(individuals)))
     cmc_score = np.zeros(len(individuals))
     for index in range(0, NUM_HASH):
@@ -108,7 +110,7 @@ def hplsfacev(args, parallel_pool):
     for probe_sample in known_test:
         sample_path = probe_sample[0]
         sample_name = probe_sample[1]
-        sample_index = train_dict[sample_path]
+        sample_index = paths_dict[sample_path]
         feature_vector = list_of_features[sample_index] 
 
         if len(feature_vector) > 1:

@@ -29,7 +29,7 @@ def split_known_unknown_sets(complete_tuple_list, known_set_size=0.5):
     label_set = set()
     for (path, label) in complete_tuple_list:
         label_set.add(label)
-
+    
     known_set = set(random.sample(label_set, int(known_set_size * len(label_set))))
     unknown_set = label_set - known_set
     
@@ -50,7 +50,7 @@ def split_train_test_samples(complete_tuple_list, train_set_samples=4):
             tuple_dict[label].append(path)
         else:
             tuple_dict[label] = [path]
-
+    
     # for tuple in tuple_dict.iteritems():
     #     assert len(tuple[1]) > train_set_samples
     
@@ -120,12 +120,28 @@ def generate_pos_neg_dict(labels):
     full_dict = dict((key, val) for key, val in full_set)
     return full_dict
 
-def split_into_chunks(full_list, num_chunks):
-    split_list = []
-    chunk_size = int(len(full_list) / num_chunks) + 1
-    for index in range(0, len(full_list), chunk_size):
-        split_list.append(full_list[index:index+chunk_size])
-    return split_list
+
+def split_into_chunks(full_tuple, num_models=100, num_subjects=50):
+    negative_list = []
+    positive_list = []
+    
+    tuple_dict = dict()
+    for (path, label) in full_tuple:
+        if tuple_dict.has_key(label):
+            tuple_dict[label].append(path)
+        else:
+            tuple_dict[label] = [path]
+    
+    individuals = list(set(tuple_dict.keys()))
+    for outer in range(num_models):
+        pos_labels = random.sample(individuals, num_subjects)
+        neg_labels = random.sample(individuals, num_subjects)
+
+        for pos in pos_labels:
+            # Continuar aqui
+    # for outer in range(num_models):
+    #     for inner in range(num_subjects):
+    #         print(outer,inner)
 
 
 def getModel(input_shape, nclasses=2):
@@ -247,7 +263,7 @@ def plot_cmc_curve(cmc_scores, extra_name):
         rank1 = score[0]
         plt.plot(x_axis, y_axis, lw=lw, color=color, label='CMC curve %d (area = %0.2f, rank-1 = %0.2f)' % (counter, area, rank1))
         counter += 1
-
+    
     plt.xlim([0, len(score)])
     plt.ylim([0.0, 1.05])
     plt.xlabel('Rank')
