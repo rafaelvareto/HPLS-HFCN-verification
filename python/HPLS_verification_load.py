@@ -17,10 +17,9 @@ from auxiliar import split_known_unknown_sets, split_train_test_sets, split_trai
 from joblib import Parallel, delayed
 from pls_classifier import PLSClassifier
 
-
 parser = argparse.ArgumentParser(description='HPLS for Face Recognition with NO Feature Extraction')
-parser.add_argument('-p', '--path', help='Path do binary feature file', required=False, default='../features/')
-parser.add_argument('-f', '--file', help='Input binary feature file name', required=False, default='LFW-DEEP-FEATURE-VECTORS.bin')
+parser.add_argument('-p', '--path', help='Path do binary feature file', required=False, default='./features/')
+parser.add_argument('-f', '--file', help='Input binary feature file name', required=False, default='PUBFIG-DEV-DEEP-FEATURE-VECTORS.bin')
 parser.add_argument('-r', '--rept', help='Number of executions', required=False, default=1)
 parser.add_argument('-m', '--hash', help='Number of hash functions', required=False, default=100)
 parser.add_argument('-ts', '--train_set_size', help='Default size of training subset', required=False, default=0.5)
@@ -50,9 +49,9 @@ def main():
             with open('./files/' + OUTPUT_NAME + '.file', 'w') as outfile:
                 pickle.dump([cmcs, prs, rocs], outfile)
 
-            plot_cmc_curve(cmcs, OUTPUT_NAME)
-            # plot_precision_recall(prs, OUTPUT_NAME)
-            # plot_roc_curve(rocs, OUTPUT_NAME)
+            # plot_cmc_curve(cmcs, OUTPUT_NAME)
+            plot_precision_recall(prs, OUTPUT_NAME)
+            plot_roc_curve(rocs, OUTPUT_NAME)
 
 
 def hplsfacev(args, parallel_pool):
@@ -64,6 +63,7 @@ def hplsfacev(args, parallel_pool):
     print('>> LOADING FEATURES FROM FILE')
     with open(PATH + DATASET, 'rb') as input_file:
         list_of_paths, list_of_labels, list_of_features = pickle.load(input_file)
+    print list_of_labels
 
     matrix_x = []
     matrix_y = []
@@ -72,19 +72,15 @@ def hplsfacev(args, parallel_pool):
     splits = []
     
     print('>> EXPLORING DATASET')
-    dataset_dict = {value:index for index,value in enumerate(list_of_paths)}
-    dataset_list = zip(list_of_paths, list_of_labels)
-    if TRAIN_SET_SIZE >= 1.0:
-        known_train, known_test = split_train_test_samples(dataset_list, train_set_samples=int(TRAIN_SET_SIZE))
-    else:
-        known_train, known_test = split_train_test_sets(dataset_list, train_set_size=TRAIN_SET_SIZE)
+    train_dict = {value:index for index,value in enumerate(list_of_paths)}
+    train_list = zip(list_of_paths, list_of_labels)
 
-    print('>> LOADING GALLERY: {0} samples'.format(len(known_train)))
+    print('>> LOADING TRAINING TUPLES: {0} samples'.format(len(known_train)))
     counterA = 0
-    for gallery_sample in known_train:
-        sample_path = gallery_sample[0]
-        sample_name = gallery_sample[1]
-        sample_index = dataset_dict[sample_path]
+    for train_sample in train_list:
+        sample_path = train_sample[0]
+        sample_name = train_sample[1]
+        sample_index = train_dict[sample_path]
         feature_vector = list_of_features[sample_index] 
     
         matrix_x.append(feature_vector)
@@ -112,7 +108,7 @@ def hplsfacev(args, parallel_pool):
     for probe_sample in known_test:
         sample_path = probe_sample[0]
         sample_name = probe_sample[1]
-        sample_index = dataset_dict[sample_path]
+        sample_index = train_dict[sample_path]
         feature_vector = list_of_features[sample_index] 
 
         if len(feature_vector) > 1:
