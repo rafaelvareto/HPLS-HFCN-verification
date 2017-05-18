@@ -76,9 +76,9 @@ def hplsfacev(args, parallel_pool):
     pos_splits, neg_splits = split_into_chunks(train_list, NUM_HASH)
 
     print('>> LEARNING PLS MODELS:')
-    models = [learn_plsh_v_model(list_of_features, train_dict, pos_s, neg_s) for (pos_s, neg_s) in zip(pos_splits, neg_splits)]
-    print('DONE')
-    raw_input('')
+    models = parallel_pool(
+        delayed(learn_plsh_v_model) (list_of_features, train_dict, pos_s, neg_s) for (pos_s, neg_s) in zip(pos_splits, neg_splits)
+    )
 
     print('>> LOADING TRAINING TUPLES: {0} splits'.format(len(known_train)))
     counterA = 0
