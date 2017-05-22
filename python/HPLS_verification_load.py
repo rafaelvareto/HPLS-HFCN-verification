@@ -61,7 +61,7 @@ def hplsfacev(args, parallel_pool):
     plotting_labels = []
     plotting_scores = []
 
-    print('>> LOADING TRAINING FEATURES FROM FILE')
+    print('>> LOADING TRAINING FEATURES')
     with open(PATH + FEATURES_TRAIN, 'rb') as input_file:
         train_paths, train_labels, train_features = pickle.load(input_file)
     
@@ -75,8 +75,14 @@ def hplsfacev(args, parallel_pool):
         delayed(learn_plsh_v_model) (train_features, train_dict, pos_s, neg_s) for (pos_s, neg_s) in zip(pos_splits, neg_splits)
     )
 
-    print('>> LOADING PROBE FEATURES FROM FILE')
+    print('>> REMOVING TRAINING FEATURES')
+    del train_paths[:]
+    del train_labels[:]
+    del train_features[:]
+
+    print('>> LOADING PROBE FEATURES')
     pos_folds, neg_folds = read_fold_file(COLLECTION)
+    assert len(pos_folds) == len(neg_folds)
     with open(PATH + FEATURES_TEST, 'rb') as input_file:
         test_paths, test_labels, test_features = pickle.load(input_file)
 
@@ -84,7 +90,11 @@ def hplsfacev(args, parallel_pool):
     test_dict = {value:index for index,value in enumerate(test_paths)}
     test_list = zip(test_paths, test_labels)
 
-  
+    fold_results = dict()
+    for (pos, neg) in zip(pos_folds, neg_folds):
+        print(pos[0], neg[0])
+
+
     print('>> LOADING KNOWN PROBE: {0} samples'.format(len(known_test)))
     counterB = 0
     for probe_sample in known_test:
@@ -124,9 +134,6 @@ def hplsfacev(args, parallel_pool):
             print('EMPTY FEATURE VECTOR')
 
     del models[:]
-    del train_paths[:]
-    del train_labels[:]
-    del train_FEATURES_TRAIN[:]
     
     cmc = np.divide(cmc_score, counterB) 
     pr = generate_precision_recall(plotting_labels, plotting_scores)

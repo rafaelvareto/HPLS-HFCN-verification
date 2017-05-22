@@ -50,12 +50,12 @@ def read_fold_file(file_name):
                 for inner in range(index, num_pos + index):
                     if len(file_list[inner]) == 3:
                         file_list[inner].insert(2, file_list[inner][0])
-                    pos_list.append(file_list[inner])
+                    pos_list.append(tuple(file_list[inner]))
                     index += 1
                 
                 neg_list = list()
                 for inner in range(index, num_neg + index):
-                    neg_list.append(file_list[inner])
+                    neg_list.append(tuple(file_list[inner]))
                     index += 1
 
                 pos_folds.append(pos_list)
@@ -236,7 +236,6 @@ def learn_plsh_v_model(features, dictionary, pos_split, neg_split):
     print('learn_plsh_v_model')
     matrix_x = []
     matrix_y = []
-    matrix_s = []
 
     for pos in pos_split:
         index_a = dictionary[pos[0]]
