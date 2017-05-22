@@ -12,33 +12,36 @@ from auxiliar import generate_precision_recall, plot_precision_recall
 from auxiliar import generate_roc_curve, plot_roc_curve
 from auxiliar import plot_cmc_curve
 from auxiliar import learn_plsh_model, learn_plsh_v_model
-from auxiliar import load_txt_file
+from auxiliar import load_txt_file, read_fold_file
 from auxiliar import split_into_chunks
 from joblib import Parallel, delayed
 from pls_classifier import PLSClassifier
 
-parser = argparse.ArgumentParser(description='HPLS for Face Recognition with NO Feature Extraction')
+parser = argparse.ArgumentParser(description='HPLS for Face Verification with NO Feature Extraction')
 parser.add_argument('-p', '--path', help='Path do binary feature file', required=False, default='./features/')
-parser.add_argument('-f', '--file', help='Input binary feature file name', required=False, default='PUBFIG-DEV-DEEP-FEATURE-VECTORS.bin')
-parser.add_argument('-r', '--rept', help='Number of executions', required=False, default=1)
-parser.add_argument('-m', '--hash', help='Number of hash functions', required=False, default=100)
-parser.add_argument('-ts', '--train_set_size', help='Default size of training subset', required=False, default=0.5)
+parser.add_argument('-c', '--collection', help='Input file name containing folds', required=False, default='./datasets/pubfig/pubfig_full.txt')
+parser.add_argument('-fts', '--features_test', help='Input containing binary FEATURES_TRAIN', required=False, default='PUBFIG-EVAL-DEEP.bin')
+parser.add_argument('-ftr', '--features_train', help='Input containing binary FEATURES_TRAIN', required=False, default='PUBFIG-DEV-DEEP.bin')
+parser.add_argument('-fo', '--fold', help='Fold number used to test', required=False, default=None)
+parser.add_argument('-hm', '--hash_models', help='Number of hash functions', required=False, default=100)
+parser.add_argument('-it', '--iterations', help='Number of executions', required=False, default=1)
 args = parser.parse_args()
+
+PATH = str(args.path)
+COLLECTION = str(args.collection)
+FEATURES_TEST = str(args.features_test)
+FEATURES_TRAIN = str(args.features_train)
+FOLD = str(args.fold)
+HASH_MODELS = int(args.hash_models)
+ITERATIONS = int(args.iterations)
+OUTPUT_NAME = 'HPLS_CROSS_VER_' + FEATURES_TRAIN + '_' + FEATURES_TEST + '_' + str(FOLD) + '_' + str(HASH_MODELS) + '_' + str(ITERATIONS)
 
 
 def main():
-    PATH = str(args.path)
-    DATASET = str(args.file)
-    ITERATIONS = int(args.rept)
-    TRAIN_SET_SIZE = float(args.train_set_size)
-    NUM_HASH = int(args.hash)
-    DATASET = DATASET.replace('-FEATURE-VECTORS.bin','')
-    OUTPUT_NAME = 'HPLS_CLOSED_' + DATASET + '_' + str(NUM_HASH) + '_' + str(TRAIN_SET_SIZE) + '_' + str(ITERATIONS)
-
     cmcs = []
     prs = []
     rocs = []
-    with Parallel(n_jobs=-2, verbose=11, backend='multiprocessing') as parallel_pool:
+    with Parallel(n_jobs=1, verbose=11, backend='multiprocessing') as parallel_pool:
         for index in range(ITERATIONS):
             print('ITERATION #%s' % str(index+1))
             cmc, pr, roc = hplsfacev(args, parallel_pool)
@@ -55,58 +58,32 @@ def main():
 
 
 def hplsfacev(args, parallel_pool):
-    PATH = str(args.path)
-    DATASET = str(args.file)
-    NUM_HASH = int(args.hash)
-    TRAIN_SET_SIZE = float(args.train_set_size)
-
-    print('>> LOADING FEATURES FROM FILE')
-    with open(PATH + DATASET, 'rb') as input_file:
-        list_of_paths, list_of_labels, list_of_features = pickle.load(input_file)
-
-    matrix_x = []
-    matrix_y = []
     plotting_labels = []
     plotting_scores = []
-    splits = []
+
+    print('>> LOADING TRAINING FEATURES FROM FILE')
+    with open(PATH + FEATURES_TRAIN, 'rb') as input_file:
+        train_paths, train_labels, train_features = pickle.load(input_file)
     
-    print('>> EXPLORING DATASET')
-    train_dict = {value:index for index,value in enumerate(list_of_paths)}
-    train_list = zip(list_of_paths, list_of_labels)
-    pos_splits, neg_splits = split_into_chunks(train_list, NUM_HASH)
+    print('>> EXPLORING TRAINING FEATURES')
+    train_dict = {value:index for index,value in enumerate(train_paths)}
+    train_list = zip(train_paths, train_labels)
+    pos_splits, neg_splits = split_into_chunks(train_list, HASH_MODELS)
 
     print('>> LEARNING PLS MODELS:')
     models = parallel_pool(
-        delayed(learn_plsh_v_model) (list_of_features, train_dict, pos_s, neg_s) for (pos_s, neg_s) in zip(pos_splits, neg_splits)
+        delayed(learn_plsh_v_model) (train_features, train_dict, pos_s, neg_s) for (pos_s, neg_s) in zip(pos_splits, neg_splits)
     )
 
-    print('>> LOADING TRAINING TUPLES: {0} splits'.format(len(known_train)))
-    counterA = 0
-    for train_sample in train_list:
-        sample_path = train_sample[0]
-        sample_name = train_sample[1]
-        sample_index = train_dict[sample_path]
-        feature_vector = list_of_features[sample_index] 
-    
-        matrix_x.append(feature_vector)
-        matrix_y.append(sample_name)
+    print('>> LOADING PROBE FEATURES FROM FILE')
+    pos_folds, neg_folds = read_fold_file(COLLECTION)
+    with open(PATH + FEATURES_TEST, 'rb') as input_file:
+        test_paths, test_labels, test_features = pickle.load(input_file)
 
-        counterA += 1
-        print(counterA, sample_path, sample_name)
-    
-    individuals = list(set(list_of_labels))
-    print('>> SPLITTING POSITIVE/NEGATIVE SETS: {0} subjects'.format(len(individuals)))
-    cmc_score = np.zeros(len(individuals))
-    for index in range(0, NUM_HASH):
-        splits.append(generate_pos_neg_dict(individuals))
+    print('>> EXPLORING PROBE FEATURES')
+    test_dict = {value:index for index,value in enumerate(test_paths)}
+    test_list = zip(test_paths, test_labels)
 
-    print('>> LEARNING PLS MODELS:')
-    numpy_x = np.array(matrix_x)
-    numpy_y = np.array(matrix_y)
-    numpy_s = np.array(splits)
-    models = parallel_pool(
-        delayed(learn_plsh_model) (numpy_x, numpy_y, split) for split in numpy_s
-    )
   
     print('>> LOADING KNOWN PROBE: {0} samples'.format(len(known_test)))
     counterB = 0
@@ -114,7 +91,7 @@ def hplsfacev(args, parallel_pool):
         sample_path = probe_sample[0]
         sample_name = probe_sample[1]
         sample_index = train_dict[sample_path]
-        feature_vector = list_of_features[sample_index] 
+        feature_vector = train_FEATURES_TRAIN[sample_index] 
 
         if len(feature_vector) > 1:
             vote_dict = dict(map(lambda vote: (vote, 0), individuals))
@@ -147,9 +124,9 @@ def hplsfacev(args, parallel_pool):
             print('EMPTY FEATURE VECTOR')
 
     del models[:]
-    del list_of_paths[:]
-    del list_of_labels[:]
-    del list_of_features[:]
+    del train_paths[:]
+    del train_labels[:]
+    del train_FEATURES_TRAIN[:]
     
     cmc = np.divide(cmc_score, counterB) 
     pr = generate_precision_recall(plotting_labels, plotting_scores)
