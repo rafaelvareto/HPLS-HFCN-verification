@@ -27,8 +27,8 @@ def load_txt_file(file_name):
 
 def read_fold_file(file_name):
     with open(file_name) as file_input:
-        neg_folds = list()
-        pos_folds = list()
+        neg_folds = []
+        pos_folds = []
         
         file_list = file_input.readlines()
         for index in range(len(file_list)):
@@ -46,14 +46,14 @@ def read_fold_file(file_name):
                 num_neg = int(file_list[index][1])
                 index += 1
                 
-                pos_list = list()
+                pos_list = []
                 for inner in range(index, num_pos + index):
                     if len(file_list[inner]) == 3:
                         file_list[inner].insert(2, file_list[inner][0])
                     pos_list.append(tuple(file_list[inner]))
                     index += 1
                 
-                neg_list = list()
+                neg_list = []
                 for inner in range(index, num_neg + index):
                     neg_list.append(tuple(file_list[inner]))
                     index += 1
@@ -272,14 +272,8 @@ def generate_precision_recall(y_label_list, y_score_list):
     An ideal system with high precision and high recall will return many results, with all results labeled correctly.
     """
     # Prepare input data
-    label_list = []
-    score_list = []
-    for line in y_label_list:
-        temp_list = [item[1] for item in line]
-        label_list.append(temp_list)
-    for line in y_score_list:
-        temp_list = [item[1] for item in line]
-        score_list.append(temp_list)
+    label_list = [line[1] for line in y_label_list]
+    score_list = [line[1] for line in y_score_list]
     label_array = np.array(label_list)
     score_array = np.array(score_list)
 
@@ -297,14 +291,8 @@ def generate_roc_curve(y_label_list, y_score_list):
     This is not very realistic, but it does mean that a larger area under the curve (AUC) is usually better.
     """
     # Prepare input data
-    label_list = []
-    score_list = []
-    for line in y_label_list:
-        temp_list = [item[1] for item in line]
-        label_list.append(temp_list)
-    for line in y_score_list:
-        temp_list = [item[1] for item in line]
-        score_list.append(temp_list)
+    label_list = [line[1] for line in y_label_list]
+    score_list = [line[1] for line in y_score_list]
     label_array = np.array(label_list)
     score_array = np.array(score_list)
 

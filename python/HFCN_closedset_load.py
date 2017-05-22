@@ -149,8 +149,8 @@ def hfcnface(args, parallel_pool):
         print(counterB, sample_name, result[0][0], output)
 
         # Getting known set plotting relevant information
-        plotting_labels.append([(sample_name, 1)])
-        plotting_scores.append([(sample_name, output)])
+        plotting_labels.append((sample_name, 1))
+        plotting_scores.append((sample_name, output))
 
     del models[:]
     del list_of_paths[:]

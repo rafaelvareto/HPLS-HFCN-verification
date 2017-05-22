@@ -19,8 +19,8 @@ from pls_classifier import PLSClassifier
 
 
 parser = argparse.ArgumentParser(description='HPLS for Face Recognition with NO Feature Extraction')
-parser.add_argument('-p', '--path', help='Path do binary feature file', required=False, default='../features/')
-parser.add_argument('-f', '--file', help='Input binary feature file name', required=False, default='LFW-DEEP-FEATURE-VECTORS.bin')
+parser.add_argument('-p', '--path', help='Path do binary feature file', required=False, default='./features/')
+parser.add_argument('-f', '--file', help='Input binary feature file name', required=False, default='FRGC-SET-1-DEEP.bin')
 parser.add_argument('-r', '--rept', help='Number of executions', required=False, default=1)
 parser.add_argument('-m', '--hash', help='Number of hash functions', required=False, default=100)
 parser.add_argument('-ts', '--train_set_size', help='Default size of training subset', required=False, default=0.5)
@@ -140,8 +140,8 @@ def hplsface(args, parallel_pool):
             print(counterB, sample_name, result[0][0], output)
 
             # Getting known set plotting relevant information
-            plotting_labels.append([(sample_name, 1)])
-            plotting_scores.append([(sample_name, output)])
+            plotting_labels.append((sample_name, 1))
+            plotting_scores.append((sample_name, output))
         else:
             print('EMPTY FEATURE VECTOR')
 
@@ -150,6 +150,7 @@ def hplsface(args, parallel_pool):
     del list_of_labels[:]
     del list_of_features[:]
     
+    print(plotting_labels)
     cmc = np.divide(cmc_score, counterB) 
     pr = generate_precision_recall(plotting_labels, plotting_scores)
     roc = generate_roc_curve(plotting_labels, plotting_scores)

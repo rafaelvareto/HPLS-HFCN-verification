@@ -139,8 +139,8 @@ def hplsface(args, parallel_pool):
         print(counterB, sample_name, result[0][0], output)
 
         # Getting known set plotting relevant information
-        plotting_labels.append([(sample_name, 1)])
-        plotting_scores.append([(sample_name, output)])
+        plotting_labels.append((sample_name, 1))
+        plotting_scores.append((sample_name, output))
 
     print('>> LOADING UNKNOWN PROBE: {0} samples'.format(len(unknown_tuples)))
     counterC = 0
@@ -168,8 +168,8 @@ def hplsface(args, parallel_pool):
         print(counterC, sample_name, result[0][0], output)
 
         # Getting unknown set plotting relevant information
-        plotting_labels.append([(sample_name, -1)])
-        plotting_scores.append([(sample_name, output)])
+        plotting_labels.append((sample_name, -1))
+        plotting_scores.append((sample_name, output))
 
     # cmc_score_norm = np.divide(cmc_score, counterA)
     # generate_cmc_curve(cmc_score_norm, DATASET + '_' + str(NUM_HASH) + '_' + DESCRIPTOR)

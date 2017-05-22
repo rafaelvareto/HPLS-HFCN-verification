@@ -38,29 +38,23 @@ OUTPUT_NAME = 'HPLS_CROSS_VER_' + FEATURES_TRAIN + '_' + FEATURES_TEST + '_' + s
 
 
 def main():
-    cmcs = []
     prs = []
     rocs = []
     with Parallel(n_jobs=1, verbose=11, backend='multiprocessing') as parallel_pool:
         for index in range(ITERATIONS):
             print('ITERATION #%s' % str(index+1))
-            cmc, pr, roc = hplsfacev(args, parallel_pool)
-            cmcs.append(cmc)
+            pr, roc = hplsfacev(args, parallel_pool)
             prs.append(pr)
             rocs.append(roc)
 
             with open('./files/' + OUTPUT_NAME + '.file', 'w') as outfile:
-                pickle.dump([cmcs, prs, rocs], outfile)
+                pickle.dump([prs, rocs], outfile)
 
-            # plot_cmc_curve(cmcs, OUTPUT_NAME)
             plot_precision_recall(prs, OUTPUT_NAME)
             plot_roc_curve(rocs, OUTPUT_NAME)
 
 
 def hplsfacev(args, parallel_pool):
-    plotting_labels = []
-    plotting_scores = []
-
     print('>> LOADING TRAINING FEATURES')
     with open(PATH + FEATURES_TRAIN, 'rb') as input_file:
         train_paths, train_labels, train_features = pickle.load(input_file)
@@ -90,55 +84,52 @@ def hplsfacev(args, parallel_pool):
     test_dict = {value:index for index,value in enumerate(test_paths)}
     test_list = zip(test_paths, test_labels)
 
-    fold_results = dict()
-    for (pos, neg) in zip(pos_folds, neg_folds):
-        print(pos[0], neg[0])
-
-
-    print('>> LOADING KNOWN PROBE: {0} samples'.format(len(known_test)))
-    counterB = 0
-    for probe_sample in known_test:
-        sample_path = probe_sample[0]
-        sample_name = probe_sample[1]
-        sample_index = train_dict[sample_path]
-        feature_vector = train_FEATURES_TRAIN[sample_index] 
-
-        if len(feature_vector) > 1:
-            vote_dict = dict(map(lambda vote: (vote, 0), individuals))
-            for model in models:
-                pos_list = [key for key, value in model[1].iteritems() if value == 1]
-                response = model[0].predict_confidence(feature_vector)
-                for pos in pos_list:
-                    vote_dict[pos] += response
-            result = vote_dict.items()
-            result.sort(key=lambda tup: tup[1], reverse=True)
-
-            for outer in range(len(individuals)):
-                for inner in range(outer + 1):
-                    if result[inner][0] == sample_name:
-                        cmc_score[outer] += 1
-                        break
-            
-            counterB += 1
-            denominator = np.absolute(np.mean([result[1][1], result[2][1]]))
-            if denominator > 0:
-                output = result[0][1] / denominator
-            else:
-                output = result[0][1]
-            print(counterB, sample_name, result[0][0], output)
-
-            # Getting known set plotting relevant information
-            plotting_labels.append([(sample_name, 1)])
-            plotting_scores.append([(sample_name, output)])
-        else:
-            print('EMPTY FEATURE VECTOR')
-
-    del models[:]
+    fold_results = []
+    # for (pos_f, neg_f) in zip(pos_folds, neg_folds):
+    pos_f = pos_folds[0]
+    neg_f = neg_folds[0]
+        
+    results_c = []
+    results_v = []
     
-    cmc = np.divide(cmc_score, counterB) 
+    print('> Positive probes:')
+    for pos in pos_f:
+        sample_a = pos[0] + '/' + pos[1] + '.jpg'
+        sample_b = pos[2] + '/' + pos[3] + '.jpg'
+        if test_dict.has_key(sample_a) and test_dict.has_key(sample_b):
+            feat_a = test_features[test_dict[sample_a]]
+            feat_b = test_features[test_dict[sample_b]]
+            diff_feat = np.absolute(np.subtract(feat_a, feat_b))
+            response_c = [model[0].predict_confidence(diff_feat) for model in models]
+            response_v = [model[0].predict_value(diff_feat) for model in models]
+            results_c.append((np.sum(response_c), 1))
+            results_v.append((np.mean(response_v), 1))
+            print(sample_a, sample_b, np.sum(response_c), np.mean(response_v))
+    
+    print('> Negative probes:')
+    for neg in neg_f:
+        sample_a = neg[0] + '/' + neg[1] + '.jpg'
+        sample_b = neg[2] + '/' + neg[3] + '.jpg'
+        if test_dict.has_key(sample_a) and test_dict.has_key(sample_b):
+            feat_a = test_features[test_dict[sample_a]]
+            feat_b = test_features[test_dict[sample_b]]
+            diff_feat = np.absolute(np.subtract(feat_a, feat_b))
+            response_c = [model[0].predict_confidence(diff_feat) for model in models]
+            response_v = [model[0].predict_value(diff_feat) for model in models]
+            results_c.append((np.sum(response_c), 0))
+            results_v.append((np.mean(response_v), 0))
+            print(sample_a, sample_b, np.sum(response_c), np.mean(response_v))
+    
+    del models[:]
+    plotting_labels = []
+    plotting_scores = []
+    for res in results_c:
+        plotting_labels.append(('_', res[1]))
+        plotting_scores.append(('_', res[0]))
+
     pr = generate_precision_recall(plotting_labels, plotting_scores)
     roc = generate_roc_curve(plotting_labels, plotting_scores)
-    return cmc, pr, roc
+    return pr, roc
 
 
 if __name__ == "__main__":
