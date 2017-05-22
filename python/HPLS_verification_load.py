@@ -19,8 +19,8 @@ from pls_classifier import PLSClassifier
 
 parser = argparse.ArgumentParser(description='HPLS for Face Verification with NO Feature Extraction')
 parser.add_argument('-p', '--path', help='Path do binary feature file', required=False, default='./features/')
-parser.add_argument('-c', '--collection', help='Input file name containing folds', required=False, default='./datasets/pubfig/pubfig_full.txt')
-parser.add_argument('-fts', '--features_test', help='Input containing binary FEATURES_TRAIN', required=False, default='PUBFIG-EVAL-DEEP.bin')
+parser.add_argument('-c', '--collection', help='Input file name containing folds', required=False, default='./datasets/lfw/lfw_pairs.txt')
+parser.add_argument('-fts', '--features_test', help='Input containing binary FEATURES_TRAIN', required=False, default='LFW-DEEP.bin')
 parser.add_argument('-ftr', '--features_train', help='Input containing binary FEATURES_TRAIN', required=False, default='PUBFIG-DEV-DEEP.bin')
 parser.add_argument('-fo', '--fold', help='Fold number used to test', required=False, default=None)
 parser.add_argument('-hm', '--hash_models', help='Number of hash functions', required=False, default=100)
@@ -34,13 +34,13 @@ FEATURES_TRAIN = str(args.features_train)
 FOLD = str(args.fold)
 HASH_MODELS = int(args.hash_models)
 ITERATIONS = int(args.iterations)
-OUTPUT_NAME = 'HPLS_CROSS_VER_' + FEATURES_TRAIN + '_' + FEATURES_TEST + '_' + str(FOLD) + '_' + str(HASH_MODELS) + '_' + str(ITERATIONS)
+OUTPUT_NAME = 'HPLS_CROSS_VER_' + FEATURES_TRAIN.replace('.bin', '') + '_' + FEATURES_TEST.replace('.bin', '') + '_' + str(FOLD) + '_' + str(HASH_MODELS) + '_' + str(ITERATIONS)
 
 
 def main():
     prs = []
     rocs = []
-    with Parallel(n_jobs=1, verbose=11, backend='multiprocessing') as parallel_pool:
+    with Parallel(n_jobs=-2, verbose=11, backend='threading') as parallel_pool:
         for index in range(ITERATIONS):
             print('ITERATION #%s' % str(index+1))
             pr, roc = hplsfacev(args, parallel_pool)
@@ -93,9 +93,9 @@ def hplsfacev(args, parallel_pool):
     results_v = []
     
     print('> Positive probes:')
-    for pos in pos_f:
-        sample_a = pos[0] + '/' + pos[1] + '.jpg'
-        sample_b = pos[2] + '/' + pos[3] + '.jpg'
+    for probe in pos_f:
+        sample_a = probe[0] + '/' + probe[0] + '_' + format(int(probe[1]),'04d') + '.jpg'
+        sample_b = probe[2] + '/' + probe[2] + '_' + format(int(probe[3]),'04d') + '.jpg'
         if test_dict.has_key(sample_a) and test_dict.has_key(sample_b):
             feat_a = test_features[test_dict[sample_a]]
             feat_b = test_features[test_dict[sample_b]]
@@ -107,9 +107,9 @@ def hplsfacev(args, parallel_pool):
             print(sample_a, sample_b, np.sum(response_c), np.mean(response_v))
     
     print('> Negative probes:')
-    for neg in neg_f:
-        sample_a = neg[0] + '/' + neg[1] + '.jpg'
-        sample_b = neg[2] + '/' + neg[3] + '.jpg'
+    for probe in neg_f:
+        sample_a = probe[0] + '/' + probe[0] + '_' + format(int(probe[1]),'04d') + '.jpg'
+        sample_b = probe[2] + '/' + probe[2] + '_' + format(int(probe[3]),'04d') + '.jpg'
         if test_dict.has_key(sample_a) and test_dict.has_key(sample_b):
             feat_a = test_features[test_dict[sample_a]]
             feat_b = test_features[test_dict[sample_b]]
@@ -123,7 +123,7 @@ def hplsfacev(args, parallel_pool):
     del models[:]
     plotting_labels = []
     plotting_scores = []
-    for res in results_c:
+    for res in results_v:
         plotting_labels.append(('_', res[1]))
         plotting_scores.append(('_', res[0]))
 

@@ -161,7 +161,7 @@ def generate_pos_neg_dict(labels):
     return full_dict
 
 
-def split_into_chunks(full_tuple, num_models=100, num_subjects=100):
+def split_into_chunks(full_tuple, num_models=100, num_subjects=200):
     neg_split = []
     pos_split = []
     
@@ -233,7 +233,6 @@ def learn_plsh_model(matrix_x, matrix_y, split):
 
 
 def learn_plsh_v_model(features, dictionary, pos_split, neg_split):
-    print('learn_plsh_v_model')
     matrix_x = []
     matrix_y = []
 
