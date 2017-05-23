@@ -396,34 +396,38 @@ def iteration_to_fold(prs, rocs):
     fold_prs = {}
     fold_rocs = {}
     
+    prs_avg = []
+    prs_pre = []
+    prs_rec = []
+    prs_thr = []
     for row in prs:
         for col in range(len(row)):
             if fold_prs.has_key(col):
                 fold_prs[col].append(row[col])
             else:
                 fold_prs[col] = [row[col]]
-    print('Done PRS')
-    prs_avg = [item['avg_precision'] for item in fold for fold in fold_prs.values()]
-    prs_rec = [item['recall'] for item in fold for fold in fold_prs.values()]
-    prs_thr = [item['thresh'] for item in fold for fold in fold_prs.values()]
-    prs_pre = [item['precision'] for item in fold for fold in fold_prs.values()]
+    for fold in fold_prs.values():
+        for item in fold:
+            prs_avg.append(item['avg_precision'])
+            prs_pre.append(item['precision'])
+            prs_rec.append(item['recall'])
+            prs_thr.append(item['thresh'])
 
+    rocs_auc = []
+    rocs_fpr = []
+    rocs_thr = []
+    rocs_tpr = []
     for row in rocs:
         for col in range(len(row)):
             if fold_rocs.has_key(col):
                 fold_rocs[col].append(row[col])
             else:
                 fold_rocs[col] = [row[col]]
+    for fold in fold_rocs.values():
+        for item in fold:
+            rocs_auc.append(item['auc'])
+            rocs_fpr.append(item['fpr'])
+            rocs_thr.append(item['thresh'])
+            rocs_tpr.append(item['tpr'])
     
     return fold_prs, fold_rocs
-
-# a =  [[240, 240, 239],
-#       [250, 249, 237], 
-#       [242, 239, 237],
-#       [240, 234, 233]]
-# b =  [[310, 410, 510],
-#       [320, 420, 520], 
-#       [330, 430, 530],
-#       [340, 440, 540]]
-
-# iteration_to_fold(a,b)
