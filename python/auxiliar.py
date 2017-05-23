@@ -161,7 +161,7 @@ def generate_pos_neg_dict(labels):
     return full_dict
 
 
-def split_into_chunks(full_tuple, num_models=100, num_subjects=200):
+def split_into_chunks(full_tuple, num_models=100, num_subjects=100):
     neg_split = []
     pos_split = []
     
@@ -182,7 +182,7 @@ def split_into_chunks(full_tuple, num_models=100, num_subjects=200):
         for pos in random.sample(individuals, num_subjects):
             candidates = tuple(random.sample(tuple_dict[pos], 2))
             pos_list.append(candidates)
-        for neg_index in range(num_subjects):
+        for neg_index in range(num_subjects * 2):
             chosen = random.sample(tuple_dict.keys(), 2)
             candidate_a = random.sample(tuple_dict[chosen[0]], 1)
             candidate_b = random.sample(tuple_dict[chosen[1]], 1)
@@ -390,3 +390,40 @@ def plot_roc_curve(rocs, extra_name=None):
     else:
         plt.savefig('./plots/ROC_' + extra_name + '.pdf')
     plt.close()
+
+
+def iteration_to_fold(prs, rocs):
+    fold_prs = {}
+    fold_rocs = {}
+    
+    for row in prs:
+        for col in range(len(row)):
+            if fold_prs.has_key(col):
+                fold_prs[col].append(row[col])
+            else:
+                fold_prs[col] = [row[col]]
+    print('Done PRS')
+    prs_avg = [item['avg_precision'] for item in fold for fold in fold_prs.values()]
+    prs_rec = [item['recall'] for item in fold for fold in fold_prs.values()]
+    prs_thr = [item['thresh'] for item in fold for fold in fold_prs.values()]
+    prs_pre = [item['precision'] for item in fold for fold in fold_prs.values()]
+
+    for row in rocs:
+        for col in range(len(row)):
+            if fold_rocs.has_key(col):
+                fold_rocs[col].append(row[col])
+            else:
+                fold_rocs[col] = [row[col]]
+    
+    return fold_prs, fold_rocs
+
+# a =  [[240, 240, 239],
+#       [250, 249, 237], 
+#       [242, 239, 237],
+#       [240, 234, 233]]
+# b =  [[310, 410, 510],
+#       [320, 420, 520], 
+#       [330, 430, 530],
+#       [340, 440, 540]]
+
+# iteration_to_fold(a,b)
