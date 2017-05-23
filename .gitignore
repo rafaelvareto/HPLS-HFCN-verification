@@ -8,6 +8,7 @@
 *.png
 *.string
 *.txt
+.DS_Store
 /data/
 
 
