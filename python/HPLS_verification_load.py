@@ -34,7 +34,9 @@ FEATURES_TRAIN = str(args.features_train)
 HASH_MODELS = int(args.hash_models)
 HASH_SAMPLES = int(args.hash_samples)
 ITERATIONS = int(args.iterations)
-OUTPUT_NAME = 'HPLS_CROSS_VER_' + FEATURES_TRAIN.replace('.bin', '') + '_' + FEATURES_TEST.replace('.bin', '') + '_' + str(HASH_MODELS) + '_' + str(HASH_SAMPLES) + '_' + str(ITERATIONS)
+TRAIN_SET = FEATURES_TRAIN.replace('.bin', '')
+TEST_SET = FEATURES_TEST.replace('.bin', '')
+OUTPUT_NAME = 'HPLS_V_' + TRAIN_SET + '_' + TEST_SET + '_' + str(HASH_MODELS) + '_' + str(HASH_SAMPLES) + '_' + str(ITERATIONS)
 
 
 def main():
@@ -50,8 +52,10 @@ def main():
             prs_f, rocs_f = iteration_to_fold(prs, rocs)
             with open('./files/' + OUTPUT_NAME + '.file', 'w') as outfile:
                 pickle.dump([prs_f, rocs_f], outfile)
-            plot_precision_recall(prs_f, OUTPUT_NAME)
-            plot_roc_curve(rocs_f, OUTPUT_NAME)
+            for index in range(len(prs_f)):
+                plot_precision_recall(prs_f[index], OUTPUT_NAME + '_fold_' + str(index + 1))
+            for index in range(len(rocs_f)):
+                plot_roc_curve(rocs_f[index], OUTPUT_NAME + '_fold_' + str(index + 1))
 
 
 def hplsfacev(args, parallel_pool):
@@ -86,8 +90,7 @@ def hplsfacev(args, parallel_pool):
     assert len(pos_folds) == len(neg_folds)
     pr_results = {}
     roc_results = {}
-    # for fold_index in range(len(pos_folds)):
-    for fold_index in range(0, 2):
+    for fold_index in range(len(pos_folds)):
         print('>> Fold #%s' % str(fold_index + 1))
         pos_f = pos_folds[fold_index]
         neg_f = neg_folds[fold_index]

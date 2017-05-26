@@ -10,9 +10,8 @@ from matplotlib import colors as mcolors
 from matplotlib import pyplot as plt
 from pls_classifier import PLSClassifier
 from sklearn.metrics import auc
-from sklearn.metrics import average_precision_score
-from sklearn.metrics import precision_recall_curve
-from sklearn.metrics import roc_curve
+from sklearn.metrics import average_precision_score, precision_recall_curve
+from sklearn.metrics import roc_curve, roc_auc_score
 
 
 def load_txt_file(file_name):
@@ -396,38 +395,48 @@ def iteration_to_fold(prs, rocs):
     fold_prs = {}
     fold_rocs = {}
     
-    prs_avg = []
-    prs_pre = []
-    prs_rec = []
-    prs_thr = []
+    # prs_avg = []
+    # prs_pre = []
+    # prs_rec = []
+    # prs_thr = []
+    # avg_prs = {}
     for row in prs:
         for col in range(len(row)):
             if fold_prs.has_key(col):
                 fold_prs[col].append(row[col])
             else:
                 fold_prs[col] = [row[col]]
-    for fold in fold_prs.values():
-        for item in fold:
-            prs_avg.append(item['avg_precision'])
-            prs_pre.append(item['precision'])
-            prs_rec.append(item['recall'])
-            prs_thr.append(item['thresh'])
+    # for fold in fold_prs.values():
+    #     for item in fold:
+    #         prs_avg.append(item['avg_precision'])
+    #         prs_pre.append(item['precision'])
+    #         prs_rec.append(item['recall'])
+    #         prs_thr.append(item['thresh'])
+    #     avg_prs['avg_precision'] = np.mean(prs_avg, axis=0)
+    #     avg_prs['precision'] = np.mean(prs_pre, axis=0)
+    #     avg_prs['recall'] = np.mean(prs_rec, axis=0)
+    #     avg_prs['thresh'] = np.mean(prs_thr, axis=0)
 
-    rocs_auc = []
-    rocs_fpr = []
-    rocs_thr = []
-    rocs_tpr = []
+    # rocs_auc = []
+    # rocs_fpr = []
+    # rocs_thr = []
+    # rocs_tpr = []
+    # avg_rocs = {}
     for row in rocs:
         for col in range(len(row)):
             if fold_rocs.has_key(col):
                 fold_rocs[col].append(row[col])
             else:
                 fold_rocs[col] = [row[col]]
-    for fold in fold_rocs.values():
-        for item in fold:
-            rocs_auc.append(item['auc'])
-            rocs_fpr.append(item['fpr'])
-            rocs_thr.append(item['thresh'])
-            rocs_tpr.append(item['tpr'])
+    # for fold in fold_rocs.values():
+    #     for item in fold:
+    #         rocs_auc.append(item['auc'])
+    #         rocs_fpr.append(item['fpr'])
+    #         rocs_thr.append(item['thresh'])
+    #         rocs_tpr.append(item['tpr'])
+    #     avg_rocs['auc'] = np.mean(rocs_auc, axis=0)
+    #     avg_rocs['fpr'] = np.mean(rocs_fpr, axis=0)
+    #     avg_rocs['thresh'] = np.mean(rocs_thr, axis=0)
+    #     avg_rocs['tpr'] = np.mean(rocs_tpr, axis=0)
     
     return fold_prs, fold_rocs
