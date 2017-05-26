@@ -340,6 +340,7 @@ def plot_cmc_curve(cmc_scores, extra_name):
 
 def plot_precision_recall(prs, extra_name=None):
     # Setup plot details
+    aucs = [pr['avg_precision'] for pr in prs]
     color_dict = dict(mcolors.BASE_COLORS, **mcolors.CSS4_COLORS)
     color_names = [name for name, color in color_dict.items()]
     colors = cycle(color_names)
@@ -354,7 +355,7 @@ def plot_precision_recall(prs, extra_name=None):
     plt.ylabel('Precision')
     plt.ylim([0.0, 1.05])
     plt.xlim([0.0, 1.0])
-    plt.title('Precision-Recall Curve')
+    plt.title('Precision-Recall Curve (area = %0.2f)' % np.mean(aucs))
     plt.legend(loc="lower left")
     plt.grid()
     if extra_name == None:
@@ -366,6 +367,7 @@ def plot_precision_recall(prs, extra_name=None):
 
 def plot_roc_curve(rocs, extra_name=None):
     # Setup plot details
+    aucs = [roc['auc'] for roc in rocs]
     color_dict = dict(mcolors.BASE_COLORS, **mcolors.CSS4_COLORS)
     color_names = [name for name, color in color_dict.items()]
     colors = cycle(color_names)
@@ -381,7 +383,7 @@ def plot_roc_curve(rocs, extra_name=None):
     plt.ylim([0.0, 1.05])
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
-    plt.title('Receiver Operating Characteristic')
+    plt.title('Receiver Operating Characteristic (area = %0.2f)' % np.mean(aucs))
     plt.legend(loc="lower right")
     plt.grid()
     if extra_name == None:

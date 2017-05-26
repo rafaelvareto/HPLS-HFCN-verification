@@ -34,8 +34,8 @@ FEATURES_TRAIN = str(args.features_train)
 HASH_MODELS = int(args.hash_models)
 HASH_SAMPLES = int(args.hash_samples)
 ITERATIONS = int(args.iterations)
-TRAIN_SET = FEATURES_TRAIN.replace('.bin', '')
-TEST_SET = FEATURES_TEST.replace('.bin', '')
+TRAIN_SET = FEATURES_TRAIN.replace('-DEEP.bin', '')
+TEST_SET = FEATURES_TEST.replace('-DEEP.bin', '')
 OUTPUT_NAME = 'HPLS_V_' + TRAIN_SET + '_' + TEST_SET + '_' + str(HASH_MODELS) + '_' + str(HASH_SAMPLES) + '_' + str(ITERATIONS)
 
 
