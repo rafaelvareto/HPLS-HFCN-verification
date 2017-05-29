@@ -226,8 +226,8 @@ def learn_fcn_model(X, Y, split):
 
 def learn_plsh_model(matrix_x, matrix_y, split=None):
     classifier = PLSClassifier()
-    boolean_label = [split[key] for key in matrix_y]
-    model = classifier.fit(np.array(matrix_x), np.array(boolean_label))
+    # boolean_label = [split[key] for key in matrix_y]
+    model = classifier.fit(np.array(matrix_x), np.array(matrix_y))
     return (model, split)
 
 
