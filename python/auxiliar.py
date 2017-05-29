@@ -10,9 +10,8 @@ from matplotlib import colors as mcolors
 from matplotlib import pyplot as plt
 from pls_classifier import PLSClassifier
 from sklearn.metrics import auc
-from sklearn.metrics import average_precision_score
-from sklearn.metrics import precision_recall_curve
-from sklearn.metrics import roc_curve
+from sklearn.metrics import average_precision_score, precision_recall_curve
+from sklearn.metrics import roc_curve, roc_auc_score
 
 
 def load_txt_file(file_name):
@@ -25,11 +24,52 @@ def load_txt_file(file_name):
     return this_list
 
 
+def read_fold_file(file_name):
+    with open(file_name) as file_input:
+        neg_folds = []
+        pos_folds = []
+        
+        file_list = file_input.readlines()
+        for index in range(len(file_list)):
+            file_list[index] = file_list[index].replace(' ', '_').strip().split('\t')
+        
+        index = 0;
+        while str(file_list[index][0]).startswith('#'):
+            index += 1
+        num_folds = int(file_list[index][0])
+        index += 1
+        
+        while index < len(file_list):
+            if not str(file_list[index][0]).startswith('#'):
+                num_pos = int(file_list[index][0])
+                num_neg = int(file_list[index][1])
+                index += 1
+                
+                pos_list = []
+                for inner in range(index, num_pos + index):
+                    if len(file_list[inner]) == 3:
+                        file_list[inner].insert(2, file_list[inner][0])
+                    pos_list.append(tuple(file_list[inner]))
+                    index += 1
+                
+                neg_list = []
+                for inner in range(index, num_neg + index):
+                    neg_list.append(tuple(file_list[inner]))
+                    index += 1
+
+                pos_folds.append(pos_list)
+                neg_folds.append(neg_list)
+            else:
+                index += 1
+
+        return pos_folds, neg_folds
+
+
 def split_known_unknown_sets(complete_tuple_list, known_set_size=0.5):
     label_set = set()
     for (path, label) in complete_tuple_list:
         label_set.add(label)
-
+    
     known_set = set(random.sample(label_set, int(known_set_size * len(label_set))))
     unknown_set = label_set - known_set
     
@@ -40,7 +80,6 @@ def split_known_unknown_sets(complete_tuple_list, known_set_size=0.5):
 
 
 def split_train_test_samples(complete_tuple_list, train_set_samples=4):
-    print('split_train_test_samples')
     to_shuffle = [item for item in complete_tuple_list]
     np.random.shuffle(to_shuffle)
 
@@ -50,7 +89,7 @@ def split_train_test_samples(complete_tuple_list, train_set_samples=4):
             tuple_dict[label].append(path)
         else:
             tuple_dict[label] = [path]
-
+    
     # for tuple in tuple_dict.iteritems():
     #     assert len(tuple[1]) > train_set_samples
     
@@ -120,12 +159,38 @@ def generate_pos_neg_dict(labels):
     full_dict = dict((key, val) for key, val in full_set)
     return full_dict
 
-def split_into_chunks(full_list, num_chunks):
-    split_list = []
-    chunk_size = int(len(full_list) / num_chunks) + 1
-    for index in range(0, len(full_list), chunk_size):
-        split_list.append(full_list[index:index+chunk_size])
-    return split_list
+
+def split_into_chunks(full_tuple, num_models=100, num_subjects=100):
+    neg_split = []
+    pos_split = []
+    
+    tuple_dict = dict()
+    for (path, label) in full_tuple:
+        if tuple_dict.has_key(label):
+            tuple_dict[label].append(path)
+        else:
+            tuple_dict[label] = [path]
+    
+    individuals = []
+    while len(individuals) < num_subjects:
+        individuals.extend(tuple_dict.keys())
+    
+    for index in range(num_models):
+        neg_list = []
+        pos_list = []
+        for pos in random.sample(individuals, num_subjects):
+            candidates = tuple(random.sample(tuple_dict[pos], 2))
+            pos_list.append(candidates)
+        for neg_index in range(num_subjects * 2):
+            chosen = random.sample(tuple_dict.keys(), 2)
+            candidate_a = random.sample(tuple_dict[chosen[0]], 1)
+            candidate_b = random.sample(tuple_dict[chosen[1]], 1)
+            neg_list.append((candidate_a[0], candidate_b[0]))
+        
+        pos_split.append(pos_list)
+        neg_split.append(neg_list)
+    
+    return pos_split, neg_split
 
 
 def getModel(input_shape, nclasses=2):
@@ -159,11 +224,34 @@ def learn_fcn_model(X, Y, split):
     return (model, split)
 
 
-def learn_plsh_model(matrix_x, matrix_y, split):
+def learn_plsh_model(matrix_x, matrix_y, split=None):
     classifier = PLSClassifier()
     boolean_label = [split[key] for key in matrix_y]
     model = classifier.fit(np.array(matrix_x), np.array(boolean_label))
     return (model, split)
+
+
+def learn_plsh_v_model(features, dictionary, pos_split, neg_split):
+    matrix_x = []
+    matrix_y = []
+
+    for pos in pos_split:
+        index_a = dictionary[pos[0]]
+        index_b = dictionary[pos[1]]
+        diff_feat = np.absolute(np.subtract(features[index_a], features[index_b]))
+        matrix_x.append(diff_feat)
+        matrix_y.append(1)
+        
+    for neg in neg_split:
+        index_a = dictionary[neg[0]]
+        index_b = dictionary[neg[1]]
+        diff_feat = np.absolute(np.subtract(features[index_a], features[index_b]))
+        matrix_x.append(diff_feat)
+        matrix_y.append(0)
+
+    classifier = PLSClassifier()
+    model = classifier.fit(np.array(matrix_x), np.array(matrix_y))
+    return (model, (pos_split, neg_split))
 
 
 def generate_probe_histogram(individuals, values, extra_name):
@@ -182,14 +270,8 @@ def generate_precision_recall(y_label_list, y_score_list):
     An ideal system with high precision and high recall will return many results, with all results labeled correctly.
     """
     # Prepare input data
-    label_list = []
-    score_list = []
-    for line in y_label_list:
-        temp_list = [item[1] for item in line]
-        label_list.append(temp_list)
-    for line in y_score_list:
-        temp_list = [item[1] for item in line]
-        score_list.append(temp_list)
+    label_list = [line[1] for line in y_label_list]
+    score_list = [line[1] for line in y_score_list]
     label_array = np.array(label_list)
     score_array = np.array(score_list)
 
@@ -207,14 +289,8 @@ def generate_roc_curve(y_label_list, y_score_list):
     This is not very realistic, but it does mean that a larger area under the curve (AUC) is usually better.
     """
     # Prepare input data
-    label_list = []
-    score_list = []
-    for line in y_label_list:
-        temp_list = [item[1] for item in line]
-        label_list.append(temp_list)
-    for line in y_score_list:
-        temp_list = [item[1] for item in line]
-        score_list.append(temp_list)
+    label_list = [line[1] for line in y_label_list]
+    score_list = [line[1] for line in y_score_list]
     label_array = np.array(label_list)
     score_array = np.array(score_list)
 
@@ -247,7 +323,7 @@ def plot_cmc_curve(cmc_scores, extra_name):
         rank1 = score[0]
         plt.plot(x_axis, y_axis, lw=lw, color=color, label='CMC curve %d (area = %0.2f, rank-1 = %0.2f)' % (counter, area, rank1))
         counter += 1
-
+    
     plt.xlim([0, len(score)])
     plt.ylim([0.0, 1.05])
     plt.xlabel('Rank')
@@ -264,6 +340,7 @@ def plot_cmc_curve(cmc_scores, extra_name):
 
 def plot_precision_recall(prs, extra_name=None):
     # Setup plot details
+    aucs = [pr['avg_precision'] for pr in prs]
     color_dict = dict(mcolors.BASE_COLORS, **mcolors.CSS4_COLORS)
     color_names = [name for name, color in color_dict.items()]
     colors = cycle(color_names)
@@ -278,7 +355,7 @@ def plot_precision_recall(prs, extra_name=None):
     plt.ylabel('Precision')
     plt.ylim([0.0, 1.05])
     plt.xlim([0.0, 1.0])
-    plt.title('Precision-Recall Curve')
+    plt.title('Precision-Recall Curve (area = %0.2f)' % np.mean(aucs))
     plt.legend(loc="lower left")
     plt.grid()
     if extra_name == None:
@@ -290,11 +367,12 @@ def plot_precision_recall(prs, extra_name=None):
 
 def plot_roc_curve(rocs, extra_name=None):
     # Setup plot details
+    aucs = [roc['auc'] for roc in rocs]
     color_dict = dict(mcolors.BASE_COLORS, **mcolors.CSS4_COLORS)
     color_names = [name for name, color in color_dict.items()]
     colors = cycle(color_names)
     lw = 2
-
+    
     # Plot Receiver Operating Characteristic curve
     plt.clf()
     for index, color in zip(range(len(rocs)), colors):
@@ -305,7 +383,7 @@ def plot_roc_curve(rocs, extra_name=None):
     plt.ylim([0.0, 1.05])
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
-    plt.title('Receiver Operating Characteristic')
+    plt.title('Receiver Operating Characteristic (area = %0.2f)' % np.mean(aucs))
     plt.legend(loc="lower right")
     plt.grid()
     if extra_name == None:
@@ -313,3 +391,54 @@ def plot_roc_curve(rocs, extra_name=None):
     else:
         plt.savefig('./plots/ROC_' + extra_name + '.pdf')
     plt.close()
+
+
+def iteration_to_fold(prs, rocs):
+    fold_prs = {}
+    fold_rocs = {}
+    
+    # prs_avg = []
+    # prs_pre = []
+    # prs_rec = []
+    # prs_thr = []
+    # avg_prs = {}
+    for row in prs:
+        for col in range(len(row)):
+            if fold_prs.has_key(col):
+                fold_prs[col].append(row[col])
+            else:
+                fold_prs[col] = [row[col]]
+    # for fold in fold_prs.values():
+    #     for item in fold:
+    #         prs_avg.append(item['avg_precision'])
+    #         prs_pre.append(item['precision'])
+    #         prs_rec.append(item['recall'])
+    #         prs_thr.append(item['thresh'])
+    #     avg_prs['avg_precision'] = np.mean(prs_avg, axis=0)
+    #     avg_prs['precision'] = np.mean(prs_pre, axis=0)
+    #     avg_prs['recall'] = np.mean(prs_rec, axis=0)
+    #     avg_prs['thresh'] = np.mean(prs_thr, axis=0)
+
+    # rocs_auc = []
+    # rocs_fpr = []
+    # rocs_thr = []
+    # rocs_tpr = []
+    # avg_rocs = {}
+    for row in rocs:
+        for col in range(len(row)):
+            if fold_rocs.has_key(col):
+                fold_rocs[col].append(row[col])
+            else:
+                fold_rocs[col] = [row[col]]
+    # for fold in fold_rocs.values():
+    #     for item in fold:
+    #         rocs_auc.append(item['auc'])
+    #         rocs_fpr.append(item['fpr'])
+    #         rocs_thr.append(item['thresh'])
+    #         rocs_tpr.append(item['tpr'])
+    #     avg_rocs['auc'] = np.mean(rocs_auc, axis=0)
+    #     avg_rocs['fpr'] = np.mean(rocs_fpr, axis=0)
+    #     avg_rocs['thresh'] = np.mean(rocs_thr, axis=0)
+    #     avg_rocs['tpr'] = np.mean(rocs_tpr, axis=0)
+    
+    return fold_prs, fold_rocs
