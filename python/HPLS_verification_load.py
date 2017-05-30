@@ -20,19 +20,15 @@ from pls_classifier import PLSClassifier
 
 parser = argparse.ArgumentParser(description='HPLS for Face Verification with NO Feature Extraction')
 parser.add_argument('-p', '--path', help='Path do binary feature file', required=False, default='./features/')
-parser.add_argument('-c', '--collection', help='Input file name containing folds', required=False, default='./datasets/pubfig/pubfig_full.txt')
-parser.add_argument('-f', '--features', help='Input containing binary FEATURES_TEST', required=False, default='PUBFIG-EVAL-DEEP.bin')
-parser.add_argument('-hm', '--hash_models', help='Number of hash functions', required=False, default=100)
-parser.add_argument('-hs', '--hash_samples', help='Number of samples per hash model', required=False, default=100)
+parser.add_argument('-c', '--collection', help='Input file name containing folds', required=False, default='./datasets/lfw/lfw_pairs.txt')
+parser.add_argument('-f', '--features', help='Input containing binary FEATURES_TEST', required=False, default='LFW-DEEP.bin')
 args = parser.parse_args()
 
 PATH = str(args.path)
 COLLECTION = str(args.collection)
 FEATURES = str(args.features)
-HASH_MODELS = int(args.hash_models)
-HASH_SAMPLES = int(args.hash_samples)
 FEAT_SET = FEATURES.replace('-DEEP.bin', '')
-OUTPUT_NAME = 'HPLS_V_' + FEAT_SET + '_' + str(HASH_MODELS) + '_' + str(HASH_SAMPLES)
+OUTPUT_NAME = 'HPLS_V_' + FEAT_SET + '_' + 'FOLD_MODEL'
 
 
 def main():
@@ -61,20 +57,21 @@ def hplsfacev(args, parallel_pool):
     collection_dict = {value:index for index,value in enumerate(collection_paths)}
     collection_list = zip(collection_paths, collection_labels)
 
+    models = []
     pr_results = {}
     roc_results = {}
     for fold_index in range(len(pos_folds)):
-        train_diff_x = []
-        train_diff_y = []
         for train_index in range(len(pos_folds)):
             if train_index != fold_index:
                 print(' > EXPLORING TRAINING FEATURES - FOLD %d' % (train_index + 1))
+                train_diff_x = []
+                train_diff_y = []
                 pos_f = pos_folds[train_index]
                 neg_f = neg_folds[train_index]
 
                 print(' > Positive tuples:')
                 for tuple in pos_f:
-                    sample_a, sample_b = mount_tuple(tuple, 'pubfig')
+                    sample_a, sample_b = mount_tuple(tuple, 'lfw')
                     if collection_dict.has_key(sample_a) and collection_dict.has_key(sample_b):
                         feat_a = collection_features[collection_dict[sample_a]]
                         feat_b = collection_features[collection_dict[sample_b]]
@@ -86,7 +83,7 @@ def hplsfacev(args, parallel_pool):
 
                 print(' > Negative tuples:')
                 for tuple in neg_f:
-                    sample_a, sample_b = mount_tuple(tuple, 'pubfig')
+                    sample_a, sample_b = mount_tuple(tuple, 'lfw')
                     if collection_dict.has_key(sample_a) and collection_dict.has_key(sample_b):
                         feat_a = collection_features[collection_dict[sample_a]]
                         feat_b = collection_features[collection_dict[sample_b]]
@@ -96,10 +93,11 @@ def hplsfacev(args, parallel_pool):
                     else:
                         print(sample_a, sample_b, 'NOT FOUND')
 
-        print('>> LEARNING PLS MODELS:')
-        numpy_x = np.array(train_diff_x)
-        numpy_y = np.array(train_diff_y)
-        models = [learn_pls_model(numpy_x, numpy_y)]
+                print(' > LEARNING PLS MODEL - FOLD %d' % (train_index + 1))
+                numpy_x = np.array(train_diff_x)
+                numpy_y = np.array(train_diff_y)
+                model = learn_pls_model(numpy_x, numpy_y)
+                models.append(model)
 
         results_c = []
         results_v = []
@@ -111,7 +109,7 @@ def hplsfacev(args, parallel_pool):
 
                 print(' > Positive tuples:')
                 for tuple in pos_f:
-                    sample_a, sample_b = mount_tuple(tuple, 'pubfig')
+                    sample_a, sample_b = mount_tuple(tuple, 'lfw')
                     if collection_dict.has_key(sample_a) and collection_dict.has_key(sample_b):
                         feat_a = collection_features[collection_dict[sample_a]]
                         feat_b = collection_features[collection_dict[sample_b]]
@@ -126,7 +124,7 @@ def hplsfacev(args, parallel_pool):
 
                 print(' > Negative tuples:')
                 for tuple in neg_f:
-                    sample_a, sample_b = mount_tuple(tuple, 'pubfig')
+                    sample_a, sample_b = mount_tuple(tuple, 'lfw')
                     if collection_dict.has_key(sample_a) and collection_dict.has_key(sample_b):
                         feat_a = collection_features[collection_dict[sample_a]]
                         feat_b = collection_features[collection_dict[sample_b]]
