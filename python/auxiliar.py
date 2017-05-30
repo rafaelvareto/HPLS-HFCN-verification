@@ -160,6 +160,18 @@ def generate_pos_neg_dict(labels):
     return full_dict
 
 
+def mount_tuple(tuple, dataset='lfw'):
+    if dataset == 'lfw':
+        sample_a = tuple[0] + '/' + tuple[0] + '_' + format(int(tuple[1]),'04d') + '.jpg'
+        sample_b = tuple[2] + '/' + tuple[2] + '_' + format(int(tuple[3]),'04d') + '.jpg'
+    elif dataset == 'pubfig':
+        sample_a = tuple[0] + '/' + tuple[1] + '.jpg'
+        sample_b = tuple[2] + '/' + tuple[3] + '.jpg'
+    else:
+        exit(0)
+    return sample_a, sample_b
+
+
 def split_into_chunks(full_tuple, num_models=100, num_subjects=100):
     neg_split = []
     pos_split = []
@@ -224,9 +236,15 @@ def learn_fcn_model(X, Y, split):
     return (model, split)
 
 
-def learn_plsh_model(matrix_x, matrix_y, split=None):
+def learn_pls_model(matrix_x, matrix_y):
+    classifier = PLSClassifier() 
+    model = classifier.fit(np.array(matrix_x), np.array(matrix_y)) 
+    return model
+
+
+def learn_plsh_model(matrix_x, matrix_y, split):
     classifier = PLSClassifier()
-    boolean_label = [split[key] for key in matrix_y]
+    boolean_label = [split[key] for key in matrix_y] 
     model = classifier.fit(np.array(matrix_x), np.array(boolean_label))
     return (model, split)
 
