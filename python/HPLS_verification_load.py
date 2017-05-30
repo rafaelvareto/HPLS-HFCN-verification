@@ -13,15 +13,14 @@ from auxiliar import generate_roc_curve, plot_roc_curve
 from auxiliar import iteration_to_fold
 from auxiliar import learn_pls_model
 from auxiliar import load_txt_file, read_fold_file
+from auxiliar import mount_tuple
 from auxiliar import split_into_chunks
 from joblib import Parallel, delayed
 from pls_classifier import PLSClassifier
 
 parser = argparse.ArgumentParser(description='HPLS for Face Verification with NO Feature Extraction')
 parser.add_argument('-p', '--path', help='Path do binary feature file', required=False, default='./features/')
-# parser.add_argument('-c', '--collection', help='Input file name containing folds', required=False, default='./datasets/lfw/lfw_pairs.txt')
 parser.add_argument('-c', '--collection', help='Input file name containing folds', required=False, default='./datasets/pubfig/pubfig_full.txt')
-# parser.add_argument('-f', '--features', help='Input containing binary FEATURES_TEST', required=False, default='LFW-DEEP.bin')
 parser.add_argument('-f', '--features', help='Input containing binary FEATURES_TEST', required=False, default='PUBFIG-EVAL-DEEP.bin')
 parser.add_argument('-hm', '--hash_models', help='Number of hash functions', required=False, default=100)
 parser.add_argument('-hs', '--hash_samples', help='Number of samples per hash model', required=False, default=100)
@@ -75,44 +74,31 @@ def hplsfacev(args, parallel_pool):
 
                 print(' > Positive tuples:')
                 for tuple in pos_f:
-                    # sample_a = tuple[0] + '/' + tuple[0] + '_' + format(int(tuple[1]),'04d') + '.jpg'
-                    # sample_b = tuple[2] + '/' + tuple[2] + '_' + format(int(tuple[3]),'04d') + '.jpg'
-                    sample_a = tuple[0] + '/' + tuple[1] + '.jpg'
-                    sample_b = tuple[2] + '/' + tuple[3] + '.jpg'
+                    sample_a, sample_b = mount_tuple(tuple, 'pubfig')
                     if collection_dict.has_key(sample_a) and collection_dict.has_key(sample_b):
                         feat_a = collection_features[collection_dict[sample_a]]
                         feat_b = collection_features[collection_dict[sample_b]]
                         diff_feat = np.absolute(np.subtract(feat_a, feat_b))
                         train_diff_x.append(diff_feat)
                         train_diff_y.append(1)
-                        # print(sample_a, sample_b, True)
-                        # raw_input('')
                     else:
                         print(sample_a, sample_b, 'NOT FOUND')
 
                 print(' > Negative tuples:')
                 for tuple in neg_f:
-                    # sample_a = tuple[0] + '/' + tuple[0] + '_' + format(int(tuple[1]),'04d') + '.jpg'
-                    # sample_b = tuple[2] + '/' + tuple[2] + '_' + format(int(tuple[3]),'04d') + '.jpg'.
-                    sample_a = tuple[0] + '/' + tuple[1] + '.jpg'
-                    sample_b = tuple[2] + '/' + tuple[3] + '.jpg'
+                    sample_a, sample_b = mount_tuple(tuple, 'pubfig')
                     if collection_dict.has_key(sample_a) and collection_dict.has_key(sample_b):
                         feat_a = collection_features[collection_dict[sample_a]]
                         feat_b = collection_features[collection_dict[sample_b]]
                         diff_feat = np.absolute(np.subtract(feat_a, feat_b))
                         train_diff_x.append(diff_feat)
                         train_diff_y.append(-1)
-                        # print(sample_a, sample_b, False)
-                        # raw_input('')
                     else:
                         print(sample_a, sample_b, 'NOT FOUND')
 
         print('>> LEARNING PLS MODELS:')
         numpy_x = np.array(train_diff_x)
         numpy_y = np.array(train_diff_y)
-        # models = parallel_pool(
-        #     delayed(learn_plsh_model) (numpy_x, numpy_y)
-        # )
         models = [learn_pls_model(numpy_x, numpy_y)]
 
         results_c = []
@@ -125,10 +111,7 @@ def hplsfacev(args, parallel_pool):
 
                 print(' > Positive tuples:')
                 for tuple in pos_f:
-                    # sample_a = tuple[0] + '/' + tuple[0] + '_' + format(int(tuple[1]),'04d') + '.jpg'
-                    # sample_b = tuple[2] + '/' + tuple[2] + '_' + format(int(tuple[3]),'04d') + '.jpg'
-                    sample_a = tuple[0] + '/' + tuple[1] + '.jpg'
-                    sample_b = tuple[2] + '/' + tuple[3] + '.jpg'
+                    sample_a, sample_b = mount_tuple(tuple, 'pubfig')
                     if collection_dict.has_key(sample_a) and collection_dict.has_key(sample_b):
                         feat_a = collection_features[collection_dict[sample_a]]
                         feat_b = collection_features[collection_dict[sample_b]]
@@ -138,13 +121,12 @@ def hplsfacev(args, parallel_pool):
                         results_c.append((np.sum(response_c), 1))
                         results_v.append((np.mean(response_v), 1))
                         print(sample_a, sample_b, np.sum(response_c), np.mean(response_v))
+                    else:
+                        print(sample_a, sample_b, 'NOT FOUND')
 
                 print(' > Negative tuples:')
                 for tuple in neg_f:
-                    # sample_a = tuple[0] + '/' + tuple[0] + '_' + format(int(tuple[1]),'04d') + '.jpg'
-                    # sample_b = tuple[2] + '/' + tuple[2] + '_' + format(int(tuple[3]),'04d') + '.jpg'
-                    sample_a = tuple[0] + '/' + tuple[1] + '.jpg'
-                    sample_b = tuple[2] + '/' + tuple[3] + '.jpg'
+                    sample_a, sample_b = mount_tuple(tuple, 'pubfig')
                     if collection_dict.has_key(sample_a) and collection_dict.has_key(sample_b):
                         feat_a = collection_features[collection_dict[sample_a]]
                         feat_b = collection_features[collection_dict[sample_b]]
@@ -154,6 +136,8 @@ def hplsfacev(args, parallel_pool):
                         results_c.append((np.sum(response_c), 0))
                         results_v.append((np.mean(response_v), 0))
                         print(sample_a, sample_b, np.sum(response_c), np.mean(response_v))
+                    else:
+                        print(sample_a, sample_b, 'NOT FOUND')
                 
         plotting_labels = []
         plotting_scores = []
