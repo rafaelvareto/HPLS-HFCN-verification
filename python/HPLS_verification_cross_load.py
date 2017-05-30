@@ -17,7 +17,7 @@ from auxiliar import split_into_chunks
 from joblib import Parallel, delayed
 from pls_classifier import PLSClassifier
 
-parser = argparse.ArgumentParser(description='HPLS for Face Verification with NO Feature Extraction')
+parser = argparse.ArgumentParser(description='HPLS for cross-dataset Face Verification with NO Feature Extraction')
 parser.add_argument('-p', '--path', help='Path do binary feature file', required=False, default='./features/')
 parser.add_argument('-c', '--collection', help='Input file name containing folds', required=False, default='./datasets/lfw/lfw_pairs.txt')
 parser.add_argument('-ftr', '--features_train', help='Input containing binary FEATURES_TRAIN', required=False, default='PUBFIG-DEV-DEEP.bin')

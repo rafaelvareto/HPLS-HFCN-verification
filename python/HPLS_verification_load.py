@@ -11,9 +11,8 @@ from auxiliar import generate_pos_neg_dict
 from auxiliar import generate_precision_recall, plot_precision_recall
 from auxiliar import generate_roc_curve, plot_roc_curve
 from auxiliar import iteration_to_fold
-from auxiliar import learn_pls_model
+from auxiliar import learn_plsh_model, learn_plsh_v_model
 from auxiliar import load_txt_file, read_fold_file
-from auxiliar import mount_tuple
 from auxiliar import split_into_chunks
 from joblib import Parallel, delayed
 from pls_classifier import PLSClassifier
@@ -21,29 +20,39 @@ from pls_classifier import PLSClassifier
 parser = argparse.ArgumentParser(description='HPLS for Face Verification with NO Feature Extraction')
 parser.add_argument('-p', '--path', help='Path do binary feature file', required=False, default='./features/')
 parser.add_argument('-c', '--collection', help='Input file name containing folds', required=False, default='./datasets/lfw/lfw_pairs.txt')
-parser.add_argument('-f', '--features', help='Input containing binary FEATURES_TEST', required=False, default='LFW-DEEP.bin')
+parser.add_argument('-f', '--features', help='Input containing binary FEATURES_TEST', required=False, default='LFW-DEEP.bin') 
+parser.add_argument('-hm', '--hash_models', help='Number of hash functions', required=False, default=100)
+parser.add_argument('-hs', '--hash_samples', help='Number of samples per hash model', required=False, default=100)
+parser.add_argument('-it', '--iterations', help='Number of executions', required=False, default=2)
 args = parser.parse_args()
 
 PATH = str(args.path)
 COLLECTION = str(args.collection)
-FEATURES = str(args.features)
-FEAT_SET = FEATURES.replace('-DEEP.bin', '')
-OUTPUT_NAME = 'HPLS_V_' + FEAT_SET + '_' + 'FOLD_MODEL'
+FEATURES = str(args.features) 
+HASH_MODELS = int(args.hash_models)
+HASH_SAMPLES = int(args.hash_samples)
+ITERATIONS = int(args.iterations)
+FEAT_SET = FEATURES.replace('-DEEP.bin', '') 
+OUTPUT_NAME = 'HPLS_VC_' + FEAT_SET + '_' + str(HASH_MODELS) + '_' + str(HASH_SAMPLES) + '_' + str(ITERATIONS)
 
 
 def main():
     prs = []
     rocs = []
     with Parallel(n_jobs=1, verbose=11, backend='multiprocessing') as parallel_pool:
+        for index in range(ITERATIONS):
+            print('ITERATION #%s' % str(index+1))
             pr, roc = hplsfacev(args, parallel_pool)
-
-            pr_list = list(pr.itervalues())
-            roc_list = list(roc.itervalues())
-
+            prs.append(pr)
+            rocs.append(roc)
+            
+            prs_f, rocs_f = iteration_to_fold(prs, rocs)
             with open('./files/' + OUTPUT_NAME + '.file', 'w') as outfile:
-                pickle.dump([pr_list, roc_list], outfile)
-            plot_precision_recall(pr_list, OUTPUT_NAME)
-            plot_roc_curve(roc_list, OUTPUT_NAME)
+                pickle.dump([prs_f, rocs_f], outfile)
+            for index in range(len(prs_f)):
+                plot_precision_recall(prs_f[index], OUTPUT_NAME + '_fold_' + str(index + 1))
+            for index in range(len(rocs_f)):
+                plot_roc_curve(rocs_f[index], OUTPUT_NAME + '_fold_' + str(index + 1))
 
 
 def hplsfacev(args, parallel_pool):
