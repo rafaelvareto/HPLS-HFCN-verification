@@ -215,7 +215,7 @@ def learn_fcn_model(X, Y, split):
     import keras
     from keras.utils import np_utils
     from keras import callbacks
-
+    
     boolean_label = [(split[key]+1)/2 for key in Y]
     y_train = np_utils.to_categorical(boolean_label, 2)
     
@@ -224,10 +224,16 @@ def learn_fcn_model(X, Y, split):
     return (model, split)
 
 
-def learn_plsh_model(matrix_x, matrix_y, split=None):
+def learn_pls_model(matrix_x, matrix_y):
+    classifier = PLSClassifier() 
+    model = classifier.fit(np.array(matrix_x), np.array(matrix_y)) 
+    return model
+
+
+def learn_plsh_model(matrix_x, matrix_y, split):
     classifier = PLSClassifier()
-    # boolean_label = [split[key] for key in matrix_y]
-    model = classifier.fit(np.array(matrix_x), np.array(matrix_y))
+    boolean_label = [split[key] for key in matrix_y] 
+    model = classifier.fit(np.array(matrix_x), np.array(boolean_label))
     return (model, split)
 
 

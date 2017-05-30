@@ -11,7 +11,7 @@ from auxiliar import generate_pos_neg_dict
 from auxiliar import generate_precision_recall, plot_precision_recall
 from auxiliar import generate_roc_curve, plot_roc_curve
 from auxiliar import iteration_to_fold
-from auxiliar import learn_plsh_model, learn_plsh_v_model
+from auxiliar import learn_pls_model
 from auxiliar import load_txt_file, read_fold_file
 from auxiliar import split_into_chunks
 from joblib import Parallel, delayed
@@ -113,7 +113,7 @@ def hplsfacev(args, parallel_pool):
         # models = parallel_pool(
         #     delayed(learn_plsh_model) (numpy_x, numpy_y)
         # )
-        models = [learn_plsh_model(numpy_x, numpy_y)]
+        models = [learn_pls_model(numpy_x, numpy_y)]
 
         results_c = []
         results_v = []
@@ -133,8 +133,8 @@ def hplsfacev(args, parallel_pool):
                         feat_a = collection_features[collection_dict[sample_a]]
                         feat_b = collection_features[collection_dict[sample_b]]
                         diff_feat = np.absolute(np.subtract(feat_a, feat_b))
-                        response_c = [model[0].predict_confidence(diff_feat) for model in models]
-                        response_v = [model[0].predict_value(diff_feat) for model in models]
+                        response_c = [model.predict_confidence(diff_feat) for model in models]
+                        response_v = [model.predict_value(diff_feat) for model in models]
                         results_c.append((np.sum(response_c), 1))
                         results_v.append((np.mean(response_v), 1))
                         print(sample_a, sample_b, np.sum(response_c), np.mean(response_v))
@@ -149,8 +149,8 @@ def hplsfacev(args, parallel_pool):
                         feat_a = collection_features[collection_dict[sample_a]]
                         feat_b = collection_features[collection_dict[sample_b]]
                         diff_feat = np.absolute(np.subtract(feat_a, feat_b))
-                        response_c = [model[0].predict_confidence(diff_feat) for model in models]
-                        response_v = [model[0].predict_value(diff_feat) for model in models]
+                        response_c = [model.predict_confidence(diff_feat) for model in models]
+                        response_v = [model.predict_value(diff_feat) for model in models]
                         results_c.append((np.sum(response_c), 0))
                         results_v.append((np.mean(response_v), 0))
                         print(sample_a, sample_b, np.sum(response_c), np.mean(response_v))
