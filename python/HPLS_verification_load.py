@@ -4,6 +4,7 @@ import itertools
 import matplotlib
 import numpy as np
 import pickle
+import random
 
 matplotlib.use('Agg')
 
@@ -13,6 +14,7 @@ from auxiliar import generate_roc_curve, plot_roc_curve
 from auxiliar import iteration_to_fold
 from auxiliar import learn_plsh_model, learn_plsh_v_model
 from auxiliar import load_txt_file, read_fold_file
+from auxiliar import mount_tuple
 from auxiliar import split_into_chunks
 from joblib import Parallel, delayed
 from pls_classifier import PLSClassifier
@@ -65,6 +67,67 @@ def hplsfacev(args, parallel_pool):
         collection_paths, collection_labels, collection_features = pickle.load(input_file)
     collection_dict = {value:index for index,value in enumerate(collection_paths)}
     collection_list = zip(collection_paths, collection_labels)
+
+    for fold_index in range(len(pos_folds)):
+        neg_matrix_x = []
+        pos_matrix_x = []
+        for train_index in range(len(pos_folds)):
+            if train_index != fold_index:
+                print(' > EXPLORING TRAINING FEATURES - FOLD %d' % (train_index + 1))
+                pos_f = pos_folds[train_index]
+                neg_f = neg_folds[train_index]
+                
+                print('  - Positive tuples:')
+                for tuple in pos_f: 
+                    sample_a, sample_b = mount_tuple(tuple, 'lfw')
+                    if collection_dict.has_key(sample_a) and collection_dict.has_key(sample_b):
+                        feat_a = collection_features[collection_dict[sample_a]]
+                        feat_b = collection_features[collection_dict[sample_b]]
+                        diff_feat = np.absolute(np.subtract(feat_a, feat_b))
+                        pos_matrix_x.append(diff_feat)
+                    else:
+                        print(sample_a, sample_b, 'NOT FOUND')
+                
+                print('  - Negative tuples:')
+                for tuple in neg_f: 
+                    sample_a, sample_b = mount_tuple(tuple, 'lfw')
+                    if collection_dict.has_key(sample_a) and collection_dict.has_key(sample_b):
+                        feat_a = collection_features[collection_dict[sample_a]]
+                        feat_b = collection_features[collection_dict[sample_b]]
+                        diff_feat = np.absolute(np.subtract(feat_a, feat_b))
+                        neg_matrix_x.append(diff_feat)
+                    else:
+                        print(sample_a, sample_b, 'NOT FOUND')
+
+        print('  - Split into Chunks: %d models, %d samples' % (HASH_MODELS, HASH_SAMPLES))
+        neg_splits = []
+        pos_splits = []
+        assert HASH_SAMPLES < len(neg_matrix_x) and HASH_SAMPLES < len(pos_matrix_x)
+        for index in range(HASH_MODELS):
+            neg_splits.append(random.sample(neg_matrix_x, HASH_SAMPLES))
+            pos_splits.append(random.sample(pos_matrix_x, HASH_SAMPLES))
+
+        print(' > LEARNING PLS MODEL - FOLD %d' % (train_index + 1))
+        numpy_x = np.array(train_diff_x)
+        numpy_y = np.array(train_diff_y)
+        model = learn_pls_model(numpy_x, numpy_y)
+        models.append(model)
+        
+        pos_test_set = []
+        neg_test_set = []
+        for test_index in range(len(pos_folds)):
+            if test_index == fold_index:
+                print(' > EXPLORING TESTING FEATURES - FOLD %d' % (test_index + 1))
+                pos_f = pos_folds[test_index]
+                neg_f = neg_folds[test_index]
+                print('  - Positive tuples:')
+                for tuple in pos_f: 
+                    sample_a, sample_b = mount_tuple(tuple, 'lfw')
+                    pos_test_set.append(tuple(sample_a, sample_b))
+                print('  - Negative tuples:')
+                for tuple in neg_f: 
+                    sample_a, sample_b = mount_tuple(tuple, 'lfw')
+                    neg_test_set.append(tuple(sample_a, sample_b))
 
     models = []
     pr_results = {}
