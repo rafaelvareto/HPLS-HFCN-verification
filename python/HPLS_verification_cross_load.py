@@ -11,20 +11,21 @@ from auxiliar import generate_pos_neg_dict
 from auxiliar import generate_precision_recall, plot_precision_recall
 from auxiliar import generate_roc_curve, plot_roc_curve
 from auxiliar import iteration_to_fold
-from auxiliar import learn_plsh_model, learn_plsh_v_model
+from auxiliar import learn_plsh_cv_model
 from auxiliar import load_txt_file, read_fold_file
+from auxiliar import mount_tuple
 from auxiliar import split_into_chunks
 from joblib import Parallel, delayed
 from pls_classifier import PLSClassifier
 
 parser = argparse.ArgumentParser(description='HPLS for cross-dataset Face Verification with NO Feature Extraction')
 parser.add_argument('-p', '--path', help='Path do binary feature file', required=False, default='./features/')
-parser.add_argument('-c', '--collection', help='Input file name containing folds', required=False, default='./datasets/lfw/lfw_pairs.txt')
+parser.add_argument('-c', '--collection', help='Input file name containing folds', required=False, default='./datasets/pubfig/pubfig_full.txt')
 parser.add_argument('-ftr', '--features_train', help='Input containing binary FEATURES_TRAIN', required=False, default='PUBFIG-DEV-DEEP.bin')
-parser.add_argument('-fts', '--features_test', help='Input containing binary FEATURES_TEST', required=False, default='LFW-DEEP.bin')
+parser.add_argument('-fts', '--features_test', help='Input containing binary FEATURES_TEST', required=False, default='PUBFIG-EVAL-DEEP.bin')
 parser.add_argument('-hm', '--hash_models', help='Number of hash functions', required=False, default=100)
 parser.add_argument('-hs', '--hash_samples', help='Number of samples per hash model', required=False, default=100)
-parser.add_argument('-it', '--iterations', help='Number of executions', required=False, default=2)
+parser.add_argument('-it', '--iterations', help='Number of executions', required=False, default=1)
 args = parser.parse_args()
 
 PATH = str(args.path)
@@ -70,7 +71,7 @@ def hplsfacev(args, parallel_pool):
 
     print('>> LEARNING PLS MODELS:')
     models = parallel_pool(
-        delayed(learn_plsh_v_model) (train_features, train_dict, pos_s, neg_s) for (pos_s, neg_s) in zip(pos_splits, neg_splits)
+        delayed(learn_plsh_cv_model) (train_features, train_dict, pos_s, neg_s) for (pos_s, neg_s) in zip(pos_splits, neg_splits)
     )
 
     print('>> REMOVING TRAINING FEATURES')
@@ -97,11 +98,9 @@ def hplsfacev(args, parallel_pool):
             
         results_c = []
         results_v = []
-        
         print('> Positive probes:')
-        for probe in pos_f:
-            sample_a = probe[0] + '/' + probe[0] + '_' + format(int(probe[1]),'04d') + '.jpg'
-            sample_b = probe[2] + '/' + probe[2] + '_' + format(int(probe[3]),'04d') + '.jpg'
+        for tuple in pos_f:
+            sample_a, sample_b = mount_tuple(tuple, 'pubfig')
             if test_dict.has_key(sample_a) and test_dict.has_key(sample_b):
                 feat_a = test_features[test_dict[sample_a]]
                 feat_b = test_features[test_dict[sample_b]]
@@ -113,9 +112,8 @@ def hplsfacev(args, parallel_pool):
                 print(sample_a, sample_b, np.sum(response_c), np.mean(response_v))
         
         print('> Negative probes:')
-        for probe in neg_f:
-            sample_a = probe[0] + '/' + probe[0] + '_' + format(int(probe[1]),'04d') + '.jpg'
-            sample_b = probe[2] + '/' + probe[2] + '_' + format(int(probe[3]),'04d') + '.jpg'
+        for tuple in neg_f:
+            sample_a, sample_b = mount_tuple(tuple, 'pubfig')
             if test_dict.has_key(sample_a) and test_dict.has_key(sample_b):
                 feat_a = test_features[test_dict[sample_a]]
                 feat_b = test_features[test_dict[sample_b]]
