@@ -25,7 +25,7 @@ parser.add_argument('-c', '--collection', help='Input file name containing folds
 parser.add_argument('-f', '--features', help='Input containing binary FEATURES_TEST', required=False, default='LFW-DEEP.bin') 
 parser.add_argument('-hm', '--hash_models', help='Number of hash functions', required=False, default=100)
 parser.add_argument('-hs', '--hash_samples', help='Number of samples per hash model', required=False, default=100)
-parser.add_argument('-it', '--iterations', help='Number of executions', required=False, default=2)
+parser.add_argument('-it', '--iterations', help='Number of executions', required=False, default=1)
 args = parser.parse_args()
 
 PATH = str(args.path)
@@ -41,7 +41,7 @@ OUTPUT_NAME = 'HPLS_VC_' + FEAT_SET + '_' + str(HASH_MODELS) + '_' + str(HASH_SA
 def main():
     prs = []
     rocs = []
-    with Parallel(n_jobs=1, verbose=11, backend='multiprocessing') as parallel_pool:
+    with Parallel(n_jobs=-2, verbose=11, backend='multiprocessing') as parallel_pool:
         for index in range(ITERATIONS):
             print('ITERATION #%s' % str(index+1))
             pr, roc = hplsfacev(args, parallel_pool)
@@ -68,6 +68,8 @@ def hplsfacev(args, parallel_pool):
     collection_dict = {value:index for index,value in enumerate(collection_paths)}
     collection_list = zip(collection_paths, collection_labels)
 
+    pr_results = {}
+    roc_results = {}
     for fold_index in range(len(pos_folds)):
         neg_matrix_x = []
         pos_matrix_x = []
@@ -107,70 +109,11 @@ def hplsfacev(args, parallel_pool):
             neg_splits.append(random.sample(neg_matrix_x, HASH_SAMPLES))
             pos_splits.append(random.sample(pos_matrix_x, HASH_SAMPLES))
 
-        print(' > LEARNING PLS MODEL - FOLD %d' % (train_index + 1))
-        numpy_x = np.array(train_diff_x)
-        numpy_y = np.array(train_diff_y)
-        model = learn_pls_model(numpy_x, numpy_y)
-        models.append(model)
+        print(' > LEARNING PLS MODEL - FOLD %d' % (fold_index + 1))
+        models = parallel_pool(
+            delayed(learn_plsh_v_model) (pos_s, neg_s) for (pos_s, neg_s) in zip(pos_splits, neg_splits)
+        )
         
-        pos_test_set = []
-        neg_test_set = []
-        for test_index in range(len(pos_folds)):
-            if test_index == fold_index:
-                print(' > EXPLORING TESTING FEATURES - FOLD %d' % (test_index + 1))
-                pos_f = pos_folds[test_index]
-                neg_f = neg_folds[test_index]
-                print('  - Positive tuples:')
-                for tuple in pos_f: 
-                    sample_a, sample_b = mount_tuple(tuple, 'lfw')
-                    pos_test_set.append(tuple(sample_a, sample_b))
-                print('  - Negative tuples:')
-                for tuple in neg_f: 
-                    sample_a, sample_b = mount_tuple(tuple, 'lfw')
-                    neg_test_set.append(tuple(sample_a, sample_b))
-
-    models = []
-    pr_results = {}
-    roc_results = {}
-    for fold_index in range(len(pos_folds)):
-        for train_index in range(len(pos_folds)):
-            if train_index != fold_index:
-                print(' > EXPLORING TRAINING FEATURES - FOLD %d' % (train_index + 1))
-                train_diff_x = []
-                train_diff_y = []
-                pos_f = pos_folds[train_index]
-                neg_f = neg_folds[train_index]
-
-                print(' > Positive tuples:')
-                for tuple in pos_f:
-                    sample_a, sample_b = mount_tuple(tuple, 'lfw')
-                    if collection_dict.has_key(sample_a) and collection_dict.has_key(sample_b):
-                        feat_a = collection_features[collection_dict[sample_a]]
-                        feat_b = collection_features[collection_dict[sample_b]]
-                        diff_feat = np.absolute(np.subtract(feat_a, feat_b))
-                        train_diff_x.append(diff_feat)
-                        train_diff_y.append(1)
-                    else:
-                        print(sample_a, sample_b, 'NOT FOUND')
-
-                print(' > Negative tuples:')
-                for tuple in neg_f:
-                    sample_a, sample_b = mount_tuple(tuple, 'lfw')
-                    if collection_dict.has_key(sample_a) and collection_dict.has_key(sample_b):
-                        feat_a = collection_features[collection_dict[sample_a]]
-                        feat_b = collection_features[collection_dict[sample_b]]
-                        diff_feat = np.absolute(np.subtract(feat_a, feat_b))
-                        train_diff_x.append(diff_feat)
-                        train_diff_y.append(-1)
-                    else:
-                        print(sample_a, sample_b, 'NOT FOUND')
-
-                print(' > LEARNING PLS MODEL - FOLD %d' % (train_index + 1))
-                numpy_x = np.array(train_diff_x)
-                numpy_y = np.array(train_diff_y)
-                model = learn_pls_model(numpy_x, numpy_y)
-                models.append(model)
-
         results_c = []
         results_v = []
         for test_index in range(len(pos_folds)):
@@ -178,9 +121,9 @@ def hplsfacev(args, parallel_pool):
                 print(' > EXPLORING TESTING FEATURES - FOLD %d' % (test_index + 1))
                 pos_f = pos_folds[test_index]
                 neg_f = neg_folds[test_index]
-
-                print(' > Positive tuples:')
-                for tuple in pos_f:
+                
+                print('  - Positive tuples:')
+                for tuple in pos_f: 
                     sample_a, sample_b = mount_tuple(tuple, 'lfw')
                     if collection_dict.has_key(sample_a) and collection_dict.has_key(sample_b):
                         feat_a = collection_features[collection_dict[sample_a]]
@@ -188,27 +131,27 @@ def hplsfacev(args, parallel_pool):
                         diff_feat = np.absolute(np.subtract(feat_a, feat_b))
                         response_c = [model.predict_confidence(diff_feat) for model in models]
                         response_v = [model.predict_value(diff_feat) for model in models]
-                        results_c.append((np.sum(response_c), 1))
-                        results_v.append((np.mean(response_v), 1))
-                        print(sample_a, sample_b, np.sum(response_c), np.mean(response_v))
-                    else:
-                        print(sample_a, sample_b, 'NOT FOUND')
-
-                print(' > Negative tuples:')
-                for tuple in neg_f:
-                    sample_a, sample_b = mount_tuple(tuple, 'lfw')
-                    if collection_dict.has_key(sample_a) and collection_dict.has_key(sample_b):
-                        feat_a = collection_features[collection_dict[sample_a]]
-                        feat_b = collection_features[collection_dict[sample_b]]
-                        diff_feat = np.absolute(np.subtract(feat_a, feat_b))
-                        response_c = [model.predict_confidence(diff_feat) for model in models]
-                        response_v = [model.predict_value(diff_feat) for model in models]
-                        results_c.append((np.sum(response_c), 0))
-                        results_v.append((np.mean(response_v), 0))
+                        results_c.append((np.sum(response_c), 1.0))
+                        results_v.append((np.mean(response_v), 1.0))
                         print(sample_a, sample_b, np.sum(response_c), np.mean(response_v))
                     else:
                         print(sample_a, sample_b, 'NOT FOUND')
                 
+                print('  - Negative tuples:')
+                for tuple in neg_f: 
+                    sample_a, sample_b = mount_tuple(tuple, 'lfw')
+                    if collection_dict.has_key(sample_a) and collection_dict.has_key(sample_b):
+                        feat_a = collection_features[collection_dict[sample_a]]
+                        feat_b = collection_features[collection_dict[sample_b]]
+                        diff_feat = np.absolute(np.subtract(feat_a, feat_b))
+                        response_c = [model.predict_confidence(diff_feat) for model in models]
+                        response_v = [model.predict_value(diff_feat) for model in models]
+                        results_c.append((np.sum(response_c), 0.0))
+                        results_v.append((np.mean(response_v), 0.0))
+                        print(sample_a, sample_b, np.sum(response_c), np.mean(response_v))
+                    else:
+                        print(sample_a, sample_b, 'NOT FOUND')
+        # raw_input('Press ENTER key to continue...')
         plotting_labels = []
         plotting_scores = []
         for res in results_v:
@@ -217,7 +160,6 @@ def hplsfacev(args, parallel_pool):
             
         pr_results[fold_index] = generate_precision_recall(plotting_labels, plotting_scores)
         roc_results[fold_index] = generate_roc_curve(plotting_labels, plotting_scores)
-        del models[:]
     return pr_results, roc_results
 
 

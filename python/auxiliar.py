@@ -236,9 +236,9 @@ def learn_fcn_model(X, Y, split):
     return (model, split)
 
 
-def learn_pls_model(matrix_x, matrix_y, pos_split=None, neg_split=None):
-    classifier = PLSClassifier() 
-    model = classifier.fit(np.array(matrix_x), np.array(matrix_y)) 
+def learn_pls_model(matrix_x, matrix_y):
+    classifier = PLSClassifier()
+    model = classifier.fit(np.array(matrix_x), np.array(matrix_y))
     return model
 
 
@@ -249,27 +249,38 @@ def learn_plsh_model(matrix_x, matrix_y, split):
     return (model, split)
 
 
-def learn_plsh_v_model(features, dictionary, pos_split, neg_split):
-    matrix_x = []
-    matrix_y = []
-
-    for pos in pos_split:
-        index_a = dictionary[pos[0]]
-        index_b = dictionary[pos[1]]
-        diff_feat = np.absolute(np.subtract(features[index_a], features[index_b]))
-        matrix_x.append(diff_feat)
-        matrix_y.append(1)
-        
-    for neg in neg_split:
-        index_a = dictionary[neg[0]]
-        index_b = dictionary[neg[1]]
-        diff_feat = np.absolute(np.subtract(features[index_a], features[index_b]))
-        matrix_x.append(diff_feat)
-        matrix_y.append(0)
+def learn_plsh_v_model(pos_split, neg_split):
+    neg_label = np.zeros(len(neg_split))
+    pos_label = np.ones(len(pos_split))
+    labels = np.concatenate([neg_label, pos_label])
+    splits = neg_split + pos_split
 
     classifier = PLSClassifier()
-    model = classifier.fit(np.array(matrix_x), np.array(matrix_y))
-    return (model, (pos_split, neg_split))
+    model = classifier.fit(np.array(splits), np.array(labels))
+    return model
+
+
+# def learn_plsh_v_model(features, dictionary, pos_split, neg_split):
+#     matrix_x = []
+#     matrix_y = []
+
+#     for pos in pos_split:
+#         index_a = dictionary[pos[0]]
+#         index_b = dictionary[pos[1]]
+#         diff_feat = np.absolute(np.subtract(features[index_a], features[index_b]))
+#         matrix_x.append(diff_feat)
+#         matrix_y.append(1)
+        
+#     for neg in neg_split:
+#         index_a = dictionary[neg[0]]
+#         index_b = dictionary[neg[1]]
+#         diff_feat = np.absolute(np.subtract(features[index_a], features[index_b]))
+#         matrix_x.append(diff_feat)
+#         matrix_y.append(0)
+
+#     classifier = PLSClassifier()
+#     model = classifier.fit(np.array(matrix_x), np.array(matrix_y))
+#     return (model, (pos_split, neg_split))
 
 
 def generate_probe_histogram(individuals, values, extra_name):
