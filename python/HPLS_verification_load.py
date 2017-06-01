@@ -22,7 +22,8 @@ from pls_classifier import PLSClassifier
 parser = argparse.ArgumentParser(description='HPLS for Face Verification with NO Feature Extraction')
 parser.add_argument('-p', '--path', help='Path do binary feature file', required=False, default='./features/')
 parser.add_argument('-c', '--collection', help='Input file name containing folds', required=False, default='./datasets/lfw/lfw_pairs.txt')
-parser.add_argument('-f', '--features', help='Input containing binary FEATURES_TEST', required=False, default='LFW-DEEP.bin') 
+parser.add_argument('-d', '--dataset', help='Dataset name', required=False, default='lfw')
+parser.add_argument('-f', '--features', help='Input containing binary FEATURES_TEST', required=False, default='LFW-DEEP.bin')
 parser.add_argument('-hm', '--hash_models', help='Number of hash functions', required=False, default=100)
 parser.add_argument('-hs', '--hash_samples', help='Number of samples per hash model', required=False, default=100)
 parser.add_argument('-it', '--iterations', help='Number of executions', required=False, default=1)
@@ -30,6 +31,7 @@ args = parser.parse_args()
 
 PATH = str(args.path)
 COLLECTION = str(args.collection)
+DATASET = str(args.dataset)
 FEATURES = str(args.features) 
 HASH_MODELS = int(args.hash_models)
 HASH_SAMPLES = int(args.hash_samples)
@@ -81,7 +83,7 @@ def hplsfacev(args, parallel_pool):
                 
                 print('  - Positive tuples:')
                 for tuple in pos_f: 
-                    sample_a, sample_b = mount_tuple(tuple, 'lfw')
+                    sample_a, sample_b = mount_tuple(tuple, DATASET)
                     if collection_dict.has_key(sample_a) and collection_dict.has_key(sample_b):
                         feat_a = collection_features[collection_dict[sample_a]]
                         feat_b = collection_features[collection_dict[sample_b]]
@@ -92,7 +94,7 @@ def hplsfacev(args, parallel_pool):
                 
                 print('  - Negative tuples:')
                 for tuple in neg_f: 
-                    sample_a, sample_b = mount_tuple(tuple, 'lfw')
+                    sample_a, sample_b = mount_tuple(tuple, DATASET)
                     if collection_dict.has_key(sample_a) and collection_dict.has_key(sample_b):
                         feat_a = collection_features[collection_dict[sample_a]]
                         feat_b = collection_features[collection_dict[sample_b]]
@@ -124,7 +126,7 @@ def hplsfacev(args, parallel_pool):
                 
                 print('  - Positive tuples:')
                 for tuple in pos_f: 
-                    sample_a, sample_b = mount_tuple(tuple, 'lfw')
+                    sample_a, sample_b = mount_tuple(tuple, DATASET)
                     if collection_dict.has_key(sample_a) and collection_dict.has_key(sample_b):
                         feat_a = collection_features[collection_dict[sample_a]]
                         feat_b = collection_features[collection_dict[sample_b]]
@@ -139,7 +141,7 @@ def hplsfacev(args, parallel_pool):
                 
                 print('  - Negative tuples:')
                 for tuple in neg_f: 
-                    sample_a, sample_b = mount_tuple(tuple, 'lfw')
+                    sample_a, sample_b = mount_tuple(tuple, DATASET)
                     if collection_dict.has_key(sample_a) and collection_dict.has_key(sample_b):
                         feat_a = collection_features[collection_dict[sample_a]]
                         feat_b = collection_features[collection_dict[sample_b]]

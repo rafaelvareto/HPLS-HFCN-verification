@@ -21,6 +21,7 @@ from pls_classifier import PLSClassifier
 parser = argparse.ArgumentParser(description='HPLS for cross-dataset Face Verification with NO Feature Extraction')
 parser.add_argument('-p', '--path', help='Path do binary feature file', required=False, default='./features/')
 parser.add_argument('-c', '--collection', help='Input file name containing folds', required=False, default='./datasets/pubfig/pubfig_full.txt')
+parser.add_argument('-d', '--dataset', help='Dataset name', required=False, default='lfw')
 parser.add_argument('-ftr', '--features_train', help='Input containing binary FEATURES_TRAIN', required=False, default='PUBFIG-DEV-DEEP.bin')
 parser.add_argument('-fts', '--features_test', help='Input containing binary FEATURES_TEST', required=False, default='PUBFIG-EVAL-DEEP.bin')
 parser.add_argument('-hm', '--hash_models', help='Number of hash functions', required=False, default=100)
@@ -32,6 +33,7 @@ PATH = str(args.path)
 COLLECTION = str(args.collection)
 FEATURES_TEST = str(args.features_test)
 FEATURES_TRAIN = str(args.features_train)
+DATASET = str(args.dataset)
 HASH_MODELS = int(args.hash_models)
 HASH_SAMPLES = int(args.hash_samples)
 ITERATIONS = int(args.iterations)
@@ -100,7 +102,7 @@ def hplsfacev(args, parallel_pool):
         results_v = []
         print('> Positive probes:')
         for tuple in pos_f:
-            sample_a, sample_b = mount_tuple(tuple, 'pubfig')
+            sample_a, sample_b = mount_tuple(tuple, DATASET)
             if test_dict.has_key(sample_a) and test_dict.has_key(sample_b):
                 feat_a = test_features[test_dict[sample_a]]
                 feat_b = test_features[test_dict[sample_b]]
@@ -113,7 +115,7 @@ def hplsfacev(args, parallel_pool):
         
         print('> Negative probes:')
         for tuple in neg_f:
-            sample_a, sample_b = mount_tuple(tuple, 'pubfig')
+            sample_a, sample_b = mount_tuple(tuple, DATASET)
             if test_dict.has_key(sample_a) and test_dict.has_key(sample_b):
                 feat_a = test_features[test_dict[sample_a]]
                 feat_b = test_features[test_dict[sample_b]]
