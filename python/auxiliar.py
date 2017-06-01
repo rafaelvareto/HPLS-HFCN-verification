@@ -193,7 +193,7 @@ def split_into_chunks(full_tuple, num_models=100, num_subjects=100):
         for pos in random.sample(individuals, num_subjects):
             candidates = tuple(random.sample(tuple_dict[pos], 2))
             pos_list.append(candidates)
-        for neg_index in range(num_subjects * 2):
+        for neg_index in range(num_subjects):
             chosen = random.sample(tuple_dict.keys(), 2)
             candidate_a = random.sample(tuple_dict[chosen[0]], 1)
             candidate_b = random.sample(tuple_dict[chosen[1]], 1)
@@ -237,8 +237,8 @@ def learn_fcn_model(X, Y, split):
 
 
 def learn_pls_model(matrix_x, matrix_y):
-    classifier = PLSClassifier() 
-    model = classifier.fit(np.array(matrix_x), np.array(matrix_y)) 
+    classifier = PLSClassifier()
+    model = classifier.fit(np.array(matrix_x), np.array(matrix_y))
     return model
 
 
@@ -249,10 +249,21 @@ def learn_plsh_model(matrix_x, matrix_y, split):
     return (model, split)
 
 
-def learn_plsh_v_model(features, dictionary, pos_split, neg_split):
+def learn_plsh_v_model(pos_split, neg_split):
+    neg_label = np.zeros(len(neg_split))
+    pos_label = np.ones(len(pos_split))
+    labels = np.concatenate([neg_label, pos_label])
+    splits = neg_split + pos_split
+
+    classifier = PLSClassifier()
+    model = classifier.fit(np.array(splits), np.array(labels))
+    return model
+
+
+def learn_plsh_cv_model(features, dictionary, pos_split, neg_split):
     matrix_x = []
     matrix_y = []
-
+    
     for pos in pos_split:
         index_a = dictionary[pos[0]]
         index_b = dictionary[pos[1]]
