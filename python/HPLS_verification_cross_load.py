@@ -39,7 +39,7 @@ HASH_SAMPLES = int(args.hash_samples)
 ITERATIONS = int(args.iterations)
 TRAIN_SET = FEATURES_TRAIN.replace('-DEEP.bin', '')
 TEST_SET = FEATURES_TEST.replace('-DEEP.bin', '')
-OUTPUT_NAME = 'HPLS_CROS_' + TRAIN_SET + '_' + TEST_SET + '_' + str(HASH_MODELS) + '_' + str(HASH_SAMPLES) + '_' + str(ITERATIONS)
+OUTPUT_NAME = 'HPLS_CROS_' + TRAIN_SET + '_' + TEST_SET + '_' + str(args.hash_models) + '_' + str(args.hash_samples) + '_' + str(args.iterations)
 
 
 def main():
