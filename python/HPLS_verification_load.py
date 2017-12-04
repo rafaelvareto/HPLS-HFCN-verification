@@ -44,7 +44,7 @@ def main():
     prs = []
     rocs = []
     times = []
-    with Parallel(n_jobs=-2, verbose=11, backend='multiprocessing') as parallel_pool:
+    with Parallel(n_jobs=4, verbose=11, backend='multiprocessing') as parallel_pool:
         for index in range(ITERATIONS):
             print('ITERATION #%s' % str(index+1))
             start_time = time.time()

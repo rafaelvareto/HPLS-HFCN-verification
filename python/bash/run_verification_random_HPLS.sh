@@ -8,7 +8,7 @@ python ../HPLS_verification_load.py -p ../features/ -c ../datasets/lfw/lfw_pairs
 python ../HPLS_verification_load.py -p ../features/ -c ../datasets/lfw/lfw_pairs.txt -d lfw -f LFW-DEEP.bin -hm 30 -hs 50 -it 10
 python ../HPLS_verification_load.py -p ../features/ -c ../datasets/lfw/lfw_pairs.txt -d lfw -f LFW-DEEP.bin -hm 50 -hs 50 -it 10
 python ../HPLS_verification_load.py -p ../features/ -c ../datasets/lfw/lfw_pairs.txt -d lfw -f LFW-DEEP.bin -hm 70 -hs 50 -it 10
-#python ../HPLS_verification_load.py -p ../features/ -c ../datasets/lfw/lfw_pairs.txt -d lfw -f LFW-DEEP.bin -hm 100 -hs 50 -it 10
+python ../HPLS_verification_load.py -p ../features/ -c ../datasets/lfw/lfw_pairs.txt -d lfw -f LFW-DEEP.bin -hm 100 -hs 50 -it 10
 #python ../HPLS_verification_load.py -p ../features/ -c ../datasets/lfw/lfw_pairs.txt -d lfw -f LFW-DEEP.bin -hm 300 -hs 50 -it 10
 #python ../HPLS_verification_load.py -p ../features/ -c ../datasets/lfw/lfw_pairs.txt -d lfw -f LFW-DEEP.bin -hm 500 -hs 50 -it 10
 
@@ -19,7 +19,7 @@ python ../HPLS_verification_load.py -p ../features/ -c ../datasets/lfw/lfw_pairs
 python ../HPLS_verification_load.py -p ../features/ -c ../datasets/lfw/lfw_pairs.txt -d lfw -f LFW-DEEP.bin -hm 30 -hs 100 -it 10
 python ../HPLS_verification_load.py -p ../features/ -c ../datasets/lfw/lfw_pairs.txt -d lfw -f LFW-DEEP.bin -hm 50 -hs 100 -it 10
 python ../HPLS_verification_load.py -p ../features/ -c ../datasets/lfw/lfw_pairs.txt -d lfw -f LFW-DEEP.bin -hm 70 -hs 100 -it 10
-#python ../HPLS_verification_load.py -p ../features/ -c ../datasets/lfw/lfw_pairs.txt -d lfw -f LFW-DEEP.bin -hm 100 -hs 100 -it 10
+python ../HPLS_verification_load.py -p ../features/ -c ../datasets/lfw/lfw_pairs.txt -d lfw -f LFW-DEEP.bin -hm 100 -hs 100 -it 10
 #python ../HPLS_verification_load.py -p ../features/ -c ../datasets/lfw/lfw_pairs.txt -d lfw -f LFW-DEEP.bin -hm 300 -hs 100 -it 10
 #python ../HPLS_verification_load.py -p ../features/ -c ../datasets/lfw/lfw_pairs.txt -d lfw -f LFW-DEEP.bin -hm 500 -hs 100 -it 10
 
@@ -30,7 +30,7 @@ python ../HPLS_verification_load.py -p ../features/ -c ../datasets/lfw/lfw_pairs
 python ../HPLS_verification_load.py -p ../features/ -c ../datasets/lfw/lfw_pairs.txt -d lfw -f LFW-DEEP.bin -hm 30 -hs 300 -it 10
 python ../HPLS_verification_load.py -p ../features/ -c ../datasets/lfw/lfw_pairs.txt -d lfw -f LFW-DEEP.bin -hm 50 -hs 300 -it 10
 python ../HPLS_verification_load.py -p ../features/ -c ../datasets/lfw/lfw_pairs.txt -d lfw -f LFW-DEEP.bin -hm 70 -hs 300 -it 10
-#python ../HPLS_verification_load.py -p ../features/ -c ../datasets/lfw/lfw_pairs.txt -d lfw -f LFW-DEEP.bin -hm 100 -hs 300 -it 10
+python ../HPLS_verification_load.py -p ../features/ -c ../datasets/lfw/lfw_pairs.txt -d lfw -f LFW-DEEP.bin -hm 100 -hs 300 -it 10
 #python ../HPLS_verification_load.py -p ../features/ -c ../datasets/lfw/lfw_pairs.txt -d lfw -f LFW-DEEP.bin -hm 300 -hs 300 -it 10
 #python ../HPLS_verification_load.py -p ../features/ -c ../datasets/lfw/lfw_pairs.txt -d lfw -f LFW-DEEP.bin -hm 500 -hs 300 -it 10
 
@@ -41,7 +41,7 @@ python ../HPLS_verification_load.py -p ../features/ -c ../datasets/lfw/lfw_pairs
 python ../HPLS_verification_load.py -p ../features/ -c ../datasets/lfw/lfw_pairs.txt -d lfw -f LFW-DEEP.bin -hm 30 -hs 500 -it 10
 python ../HPLS_verification_load.py -p ../features/ -c ../datasets/lfw/lfw_pairs.txt -d lfw -f LFW-DEEP.bin -hm 50 -hs 500 -it 10
 python ../HPLS_verification_load.py -p ../features/ -c ../datasets/lfw/lfw_pairs.txt -d lfw -f LFW-DEEP.bin -hm 70 -hs 500 -it 10
-#python ../HPLS_verification_load.py -p ../features/ -c ../datasets/lfw/lfw_pairs.txt -d lfw -f LFW-DEEP.bin -hm 100 -hs 500 -it 10
+python ../HPLS_verification_load.py -p ../features/ -c ../datasets/lfw/lfw_pairs.txt -d lfw -f LFW-DEEP.bin -hm 100 -hs 500 -it 10
 #python ../HPLS_verification_load.py -p ../features/ -c ../datasets/lfw/lfw_pairs.txt -d lfw -f LFW-DEEP.bin -hm 300 -hs 500 -it 10
 #python ../HPLS_verification_load.py -p ../features/ -c ../datasets/lfw/lfw_pairs.txt -d lfw -f LFW-DEEP.bin -hm 500 -hs 500 -it 10
 
@@ -54,7 +54,7 @@ python ../HPLS_verification_load.py -p ../features/ -c ../datasets/pubfig/pubfig
 python ../HPLS_verification_load.py -p ../features/ -c ../datasets/pubfig/pubfig_full.txt -d pubfig -f PUBFIG-EVAL-DEEP.bin -hm 30 -hs 50 -it 10
 python ../HPLS_verification_load.py -p ../features/ -c ../datasets/pubfig/pubfig_full.txt -d pubfig -f PUBFIG-EVAL-DEEP.bin -hm 50 -hs 50 -it 10
 python ../HPLS_verification_load.py -p ../features/ -c ../datasets/pubfig/pubfig_full.txt -d pubfig -f PUBFIG-EVAL-DEEP.bin -hm 70 -hs 50 -it 10
-#python ../HPLS_verification_load.py -p ../features/ -c ../datasets/pubfig/pubfig_full.txt -d pubfig -f PUBFIG-EVAL-DEEP.bin -hm 100 -hs 50 -it 10
+python ../HPLS_verification_load.py -p ../features/ -c ../datasets/pubfig/pubfig_full.txt -d pubfig -f PUBFIG-EVAL-DEEP.bin -hm 100 -hs 50 -it 10
 #python ../HPLS_verification_load.py -p ../features/ -c ../datasets/pubfig/pubfig_full.txt -d pubfig -f PUBFIG-EVAL-DEEP.bin -hm 300 -hs 50 -it 10
 #python ../HPLS_verification_load.py -p ../features/ -c ../datasets/pubfig/pubfig_full.txt -d pubfig -f PUBFIG-EVAL-DEEP.bin -hm 500 -hs 50 -it 10
 
@@ -65,7 +65,7 @@ python ../HPLS_verification_load.py -p ../features/ -c ../datasets/pubfig/pubfig
 python ../HPLS_verification_load.py -p ../features/ -c ../datasets/pubfig/pubfig_full.txt -d pubfig -f PUBFIG-EVAL-DEEP.bin -hm 30 -hs 100 -it 10
 python ../HPLS_verification_load.py -p ../features/ -c ../datasets/pubfig/pubfig_full.txt -d pubfig -f PUBFIG-EVAL-DEEP.bin -hm 50 -hs 100 -it 10
 python ../HPLS_verification_load.py -p ../features/ -c ../datasets/pubfig/pubfig_full.txt -d pubfig -f PUBFIG-EVAL-DEEP.bin -hm 70 -hs 100 -it 10
-#python ../HPLS_verification_load.py -p ../features/ -c ../datasets/pubfig/pubfig_full.txt -d pubfig -f PUBFIG-EVAL-DEEP.bin -hm 100 -hs 100 -it 10
+python ../HPLS_verification_load.py -p ../features/ -c ../datasets/pubfig/pubfig_full.txt -d pubfig -f PUBFIG-EVAL-DEEP.bin -hm 100 -hs 100 -it 10
 #python ../HPLS_verification_load.py -p ../features/ -c ../datasets/pubfig/pubfig_full.txt -d pubfig -f PUBFIG-EVAL-DEEP.bin -hm 300 -hs 100 -it 10
 #python ../HPLS_verification_load.py -p ../features/ -c ../datasets/pubfig/pubfig_full.txt -d pubfig -f PUBFIG-EVAL-DEEP.bin -hm 500 -hs 100 -it 10
 
@@ -76,7 +76,7 @@ python ../HPLS_verification_load.py -p ../features/ -c ../datasets/pubfig/pubfig
 python ../HPLS_verification_load.py -p ../features/ -c ../datasets/pubfig/pubfig_full.txt -d pubfig -f PUBFIG-EVAL-DEEP.bin -hm 30 -hs 300 -it 10
 python ../HPLS_verification_load.py -p ../features/ -c ../datasets/pubfig/pubfig_full.txt -d pubfig -f PUBFIG-EVAL-DEEP.bin -hm 50 -hs 300 -it 10
 python ../HPLS_verification_load.py -p ../features/ -c ../datasets/pubfig/pubfig_full.txt -d pubfig -f PUBFIG-EVAL-DEEP.bin -hm 70 -hs 300 -it 10
-#python ../HPLS_verification_load.py -p ../features/ -c ../datasets/pubfig/pubfig_full.txt -d pubfig -f PUBFIG-EVAL-DEEP.bin -hm 100 -hs 300 -it 10
+python ../HPLS_verification_load.py -p ../features/ -c ../datasets/pubfig/pubfig_full.txt -d pubfig -f PUBFIG-EVAL-DEEP.bin -hm 100 -hs 300 -it 10
 #python ../HPLS_verification_load.py -p ../features/ -c ../datasets/pubfig/pubfig_full.txt -d pubfig -f PUBFIG-EVAL-DEEP.bin -hm 300 -hs 300 -it 10
 #python ../HPLS_verification_load.py -p ../features/ -c ../datasets/pubfig/pubfig_full.txt -d pubfig -f PUBFIG-EVAL-DEEP.bin -hm 500 -hs 300 -it 10
 
@@ -87,6 +87,6 @@ python ../HPLS_verification_load.py -p ../features/ -c ../datasets/pubfig/pubfig
 python ../HPLS_verification_load.py -p ../features/ -c ../datasets/pubfig/pubfig_full.txt -d pubfig -f PUBFIG-EVAL-DEEP.bin -hm 30 -hs 500 -it 10
 python ../HPLS_verification_load.py -p ../features/ -c ../datasets/pubfig/pubfig_full.txt -d pubfig -f PUBFIG-EVAL-DEEP.bin -hm 50 -hs 500 -it 10
 python ../HPLS_verification_load.py -p ../features/ -c ../datasets/pubfig/pubfig_full.txt -d pubfig -f PUBFIG-EVAL-DEEP.bin -hm 70 -hs 500 -it 10
-#python ../HPLS_verification_load.py -p ../features/ -c ../datasets/pubfig/pubfig_full.txt -d pubfig -f PUBFIG-EVAL-DEEP.bin -hm 100 -hs 500 -it 10
+python ../HPLS_verification_load.py -p ../features/ -c ../datasets/pubfig/pubfig_full.txt -d pubfig -f PUBFIG-EVAL-DEEP.bin -hm 100 -hs 500 -it 10
 #python ../HPLS_verification_load.py -p ../features/ -c ../datasets/pubfig/pubfig_full.txt -d pubfig -f PUBFIG-EVAL-DEEP.bin -hm 300 -hs 500 -it 10
 #python ../HPLS_verification_load.py -p ../features/ -c ../datasets/pubfig/pubfig_full.txt -d pubfig -f PUBFIG-EVAL-DEEP.bin -hm 500 -hs 500 -it 10
