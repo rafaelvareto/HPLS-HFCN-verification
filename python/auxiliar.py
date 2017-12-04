@@ -420,7 +420,7 @@ def plot_precision_recall(prs, extra_name=None):
     plt.ylabel('Precision')
     plt.ylim([0.0, 1.05])
     plt.xlim([0.0, 1.0])
-    plt.title('Precision-Recall Curve (area = %0.2f)' % np.mean(aucs))
+    plt.title('Precision-Recall Curve (%0.3f - %0.3f)' % (np.mean(aucs),np.std(aucs)))
     plt.legend(loc="lower left")
     plt.grid()
     if extra_name == None:
@@ -448,7 +448,7 @@ def plot_roc_curve(rocs, extra_name=None):
     plt.ylim([0.0, 1.05])
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
-    plt.title('Receiver Operating Characteristic (area = %0.2f)' % np.mean(aucs))
+    plt.title('Receiver Operating Characteristic (%0.3f - %0.3f)' % (np.mean(aucs),np.std(aucs)))
     plt.legend(loc="lower right")
     plt.grid()
     if extra_name == None:
