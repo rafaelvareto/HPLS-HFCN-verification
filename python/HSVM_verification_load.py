@@ -13,13 +13,13 @@ from auxiliar import generate_pos_neg_dict
 from auxiliar import generate_precision_recall, plot_precision_recall
 from auxiliar import generate_roc_curve, plot_roc_curve
 from auxiliar import iteration_to_fold
-from auxiliar import learn_plsh_v_model
+from auxiliar import learn_svmh_v_model
 from auxiliar import load_txt_file, read_fold_file
 from auxiliar import mount_tuple
 from auxiliar import split_into_chunks
 from joblib import Parallel, delayed
 
-parser = argparse.ArgumentParser(description='HPLS for Face Verification with NO Feature Extraction')
+parser = argparse.ArgumentParser(description='HSVM for Face Verification with NO Feature Extraction')
 parser.add_argument('-p', '--path', help='Path do binary feature file', required=False, default='./features/')
 parser.add_argument('-c', '--collection', help='Input file name containing folds', required=False, default='./datasets/lfw/lfw_pairs.txt')
 parser.add_argument('-d', '--dataset', help='Dataset name', required=False, default='lfw')
@@ -37,7 +37,7 @@ HASH_MODELS = int(args.hash_models)
 HASH_SAMPLES = int(args.hash_samples)
 ITERATIONS = int(args.iterations)
 FEAT_SET = FEATURES.replace('-DEEP.bin', '') 
-OUTPUT_NAME = 'HPLS_VC_' + FEAT_SET + '_' + str(HASH_MODELS) + '_' + str(HASH_SAMPLES) + '_' + str(ITERATIONS)
+OUTPUT_NAME = 'HSVM_VC_' + FEAT_SET + '_' + str(HASH_MODELS) + '_' + str(HASH_SAMPLES) + '_' + str(ITERATIONS)
 
 
 def main():
@@ -45,10 +45,10 @@ def main():
     rocs = []
     times = []
     with Parallel(n_jobs=-2, verbose=11, backend='multiprocessing') as parallel_pool:
-        for index in range(ITERATIONS):
+        for index in range(ITERATIONS):            
             print('ITERATION #%s' % str(index+1))
             start_time = time.time()
-            pr, roc = hplsfacev(args, parallel_pool)
+            pr, roc = hsvmfacev(args, parallel_pool)
             end_time = time.time()
             
             abs_time = (end_time - start_time) / 10
@@ -70,7 +70,7 @@ def main():
             outtime.write(str(np.std(times)) + '\n')
 
 
-def hplsfacev(args, parallel_pool):
+def hsvmfacev(args, parallel_pool):
     print('>> LOADING DATASET FOLDS')
     pos_folds, neg_folds = read_fold_file(COLLECTION)
     assert len(pos_folds) == len(neg_folds)
@@ -122,13 +122,12 @@ def hplsfacev(args, parallel_pool):
             neg_splits.append(random.sample(neg_matrix_x, HASH_SAMPLES))
             pos_splits.append(random.sample(pos_matrix_x, HASH_SAMPLES))
 
-        print(' > LEARNING PLS MODEL - FOLD %d' % (fold_index + 1))
+        print(' > LEARNING SVM MODEL - FOLD %d' % (fold_index + 1))
         models = parallel_pool(
-            delayed(learn_plsh_v_model) (pos_s, neg_s) for (pos_s, neg_s) in zip(pos_splits, neg_splits)
+            delayed(learn_svmh_v_model) (pos_s, neg_s) for (pos_s, neg_s) in zip(pos_splits, neg_splits)
         )
         
-        results_c = []
-        results_v = []
+        results = []
         for test_index in range(len(pos_folds)):
             if test_index == fold_index:
                 print(' > EXPLORING TESTING FEATURES - FOLD %d' % (test_index + 1))
@@ -142,11 +141,9 @@ def hplsfacev(args, parallel_pool):
                         feat_a = collection_features[collection_dict[sample_a]]
                         feat_b = collection_features[collection_dict[sample_b]]
                         diff_feat = np.absolute(np.subtract(feat_a, feat_b))
-                        response_c = [model.predict_confidence(diff_feat) for model in models]
-                        response_v = [model.predict_value(diff_feat) for model in models]
-                        results_c.append((np.sum(response_c), 1.0))
-                        results_v.append((np.mean(response_v), 1.0))
-                        print(sample_a, sample_b, np.sum(response_c), np.mean(response_v))
+                        response = [model.predict([diff_feat]) for model in models]
+                        results.append((np.sum(response), 1.0))
+                        print(sample_a, sample_b, np.sum(response))
                     else:
                         print(sample_a, sample_b, 'NOT FOUND')
                 
@@ -157,17 +154,15 @@ def hplsfacev(args, parallel_pool):
                         feat_a = collection_features[collection_dict[sample_a]]
                         feat_b = collection_features[collection_dict[sample_b]]
                         diff_feat = np.absolute(np.subtract(feat_a, feat_b))
-                        response_c = [model.predict_confidence(diff_feat) for model in models]
-                        response_v = [model.predict_value(diff_feat) for model in models]
-                        results_c.append((np.sum(response_c), 0.0))
-                        results_v.append((np.mean(response_v), 0.0))
-                        print(sample_a, sample_b, np.sum(response_c), np.mean(response_v))
+                        response = [model.predict([diff_feat]) for model in models]
+                        results.append((np.sum(response), 0.0))
+                        print(sample_a, sample_b, np.sum(response))
                     else:
                         print(sample_a, sample_b, 'NOT FOUND')
         # raw_input('Press ENTER key to continue...')
         plotting_labels = []
         plotting_scores = []
-        for res in results_v:
+        for res in results:
             plotting_labels.append(('_', res[1]))
             plotting_scores.append(('_', res[0]))
             

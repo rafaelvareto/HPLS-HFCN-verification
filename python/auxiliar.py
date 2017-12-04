@@ -12,6 +12,8 @@ from pls_classifier import PLSClassifier
 from sklearn.metrics import auc
 from sklearn.metrics import average_precision_score, precision_recall_curve
 from sklearn.metrics import roc_curve, roc_auc_score
+from sklearn.svm import SVC
+from sklearn.svm import SVR
 
 
 def load_txt_file(file_name):
@@ -32,7 +34,7 @@ def read_fold_file(file_name):
         file_list = file_input.readlines()
         for index in range(len(file_list)):
             file_list[index] = file_list[index].replace(' ', '_').strip().split('\t')
-        
+            
         index = 0;
         while str(file_list[index][0]).startswith('#'):
             index += 1
@@ -256,6 +258,17 @@ def learn_plsh_v_model(pos_split, neg_split):
     splits = neg_split + pos_split
 
     classifier = PLSClassifier()
+    model = classifier.fit(np.array(splits), np.array(labels))
+    return model
+
+
+def learn_svmh_v_model(pos_split, neg_split):
+    neg_label = np.zeros(len(neg_split))
+    pos_label = np.ones(len(pos_split))
+    labels = np.concatenate([neg_label, pos_label])
+    splits = neg_split + pos_split
+    
+    classifier = SVR(C=1.0,kernel='linear')
     model = classifier.fit(np.array(splits), np.array(labels))
     return model
 
