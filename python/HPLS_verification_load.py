@@ -37,7 +37,7 @@ HASH_MODELS = int(args.hash_models)
 HASH_SAMPLES = int(args.hash_samples)
 ITERATIONS = int(args.iterations)
 FEAT_SET = FEATURES.replace('-DEEP.bin', '') 
-OUTPUT_NAME = 'HPLS_VC_' + FEAT_SET + '_' + str(HASH_MODELS) + '_' + str(HASH_SAMPLES) + '_' + str(ITERATIONS)
+OUTPUT_NAME = 'HPLS_SAME_' + FEAT_SET + '_' + str(args.hash_models) + '_' + str(args.hash_samples) + '_' + str(args.iterations)
 
 
 def main():
