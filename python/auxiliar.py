@@ -296,6 +296,29 @@ def learn_plsh_cv_model(features, dictionary, pos_split, neg_split):
     return (model, (pos_split, neg_split))
 
 
+def learn_svmh_cv_model(features, dictionary, pos_split, neg_split):
+    matrix_x = []
+    matrix_y = []
+    
+    for pos in pos_split:
+        index_a = dictionary[pos[0]]
+        index_b = dictionary[pos[1]]
+        diff_feat = np.absolute(np.subtract(features[index_a], features[index_b]))
+        matrix_x.append(diff_feat)
+        matrix_y.append(1)
+        
+    for neg in neg_split:
+        index_a = dictionary[neg[0]]
+        index_b = dictionary[neg[1]]
+        diff_feat = np.absolute(np.subtract(features[index_a], features[index_b]))
+        matrix_x.append(diff_feat)
+        matrix_y.append(0)
+
+    classifier = SVR(C=1.0,kernel='linear')
+    model = classifier.fit(np.array(matrix_x), np.array(matrix_y))
+    return (model, (pos_split, neg_split))
+
+
 def generate_probe_histogram(individuals, values, extra_name):
     plt.clf()
     plt.bar(range(len(individuals)), values)
