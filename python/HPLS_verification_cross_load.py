@@ -29,6 +29,7 @@ parser.add_argument('-hs', '--hash_samples', help='Number of samples per hash mo
 parser.add_argument('-it', '--iterations', help='Number of executions', required=False, default=1)
 args = parser.parse_args()
 
+FOLD = 10
 PATH = str(args.path)
 COLLECTION = str(args.collection)
 FEATURES_TEST = str(args.features_test)
@@ -53,7 +54,7 @@ def main():
             pr, roc = hplsfacev(args, parallel_pool)
             end_time = time.time()
             
-            abs_time = (end_time - start_time) / 10
+            abs_time = (end_time - start_time) / FOLD
             prs.append(pr)
             rocs.append(roc)
             times.append(abs_time)
