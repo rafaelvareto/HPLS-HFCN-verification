@@ -107,21 +107,18 @@ In addition to OpenCV, the following Python libraries are required in order to e
 
 
 ### Datasets
-In order to reproduce the experiments, you need to either download the utilized datasets (FRGCv1, PubFig83 and VGGFace) and extract their corresponding feature vectors or download their disclosed feature files:
-* Face Recognition Grand Challenge [[exp1](http://homepages.dcc.ufmg.br/~rafaelvareto/features/FRGC-SET-1-DEEP.bin)] [[exp2](http://homepages.dcc.ufmg.br/~rafaelvareto/features/FRGC-SET-2-DEEP.bin)] [[exp4](http://homepages.dcc.ufmg.br/~rafaelvareto/features/FRGC-SET-4-DEEP.bin)]
-* Public Figures 83 [[dev](http://homepages.dcc.ufmg.br/~rafaelvareto/features/PUBFIG-DEV-DEEP.bin)] [[eval](http://homepages.dcc.ufmg.br/~rafaelvareto/features/PUBFIG-EVAL-DEEP.bin)]
-* VGGFace Dataset [[vgg](http://homepages.dcc.ufmg.br/~rafaelvareto/features/VGGFACE-15-DEEP.bin)] [[hog](http://homepages.dcc.ufmg.br/~rafaelvareto/features/VGGFACE-15-HOG.bin)]
+In order to reproduce the experiments, you need to either download the utilized datasets (LFW and PubFig) and extract their corresponding feature vectors or download their disclosed feature files:
+* Labeled Faces in the Wild [[vgg](http://homepages.dcc.ufmg.br/~rafaelvareto/features/LFW-DEEP.bin)]
+* Public Figures [[vgg-dev](http://homepages.dcc.ufmg.br/~rafaelvareto/features/PUBFIG-DEV-DEEP.bin)] [[vgg-eval](http://homepages.dcc.ufmg.br/~rafaelvareto/features/PUBFIG-EVAL-DEEP.bin)]
 
-Note that the complete [VGGFace dataset](http://www.robots.ox.ac.uk/~vgg/data/vgg_face/) contains 2,622 identities. 
-In our experiments, we only utilize 1,000 subject identities holding 15 face samples each.
+Note that PubFig was released long ago and they do not distribute image files due to copyright issues. Thus, only 26.787 out of 58.797 initially images remain available as links to these files are gradually disappearing over time.
 
 
 ### Deployment Process
-The python folder contains all the code employed in the experiments detailed in our [IJCB conference paper](http://homepages.dcc.ufmg.br/~william/papers/paper_2017_IJCB.pdf).
+The python folder contains all the code employed in the experiments detailed in our [SIBGRAPI conference paper](http://www.dcc.ufmg.br/~william/papers/paper_2017_SIBGRAPI_Vareto.pdf).
 There are many python codes, however the main files are:
-* **HFCN_openset_load.py:** This file runs an embedding of classifiers comprised of binary fully connected network models.
-* **HPLS_openset_load.py:** This file runs an embedding of classifiers comprised of binary partial least squares models.
-* **HSVM_openset_load.py:** This file runs an embedding of classifiers comprised of binary support vector machine models.
+* **HPLS_verification_load.py:** This file runs an embedding of classifiers comprised of binary partial least squares models.
+* **HSVM_verification_load.py:** This file runs an embedding of classifiers comprised of binary support vector machine models.
 
 **FYI:** The main difference between *load* and *feat* files is that the former is configure to load dataset feature vectors from files (links are available above) whereas the latter extracts features at execution time.
 
@@ -141,11 +138,9 @@ with open(file_name, 'rb') as infile:
     matrix_z, matrix_y, matrix_x = pickle.load(infile)
 ```
 
-Folder *libsvm* and *scripts* hold all the necessary files for running one of the basilines: one-class LIBSVM.
-
 Suppose you have installed all the necessary Python requirements and downloaded all necessary *.bin*-feature dataset files.
 Assuming that you are on this repository's *python* folder and the feature files are stored in the *python/features*, you can run the developed methods by simply typing the following command in terminal:
 ```bash
-python HPLS_openset_load.py -p ./features/ -f FRGC-SET-4-DEEP.bin -r 10 -m 10 -ks 0.1 -ts 0.5
+python ../HPLS_verification_load.py -p ../features/ -c ../datasets/lfw/lfw_pairs.txt -d lfw -f LFW-DEEP.bin -hm 005 -hs 50 -it 10
 ```
-Where **-p** determines the feature path, **-f** specifies the feature file, **-r** indicates the number of repetitions, **-m** defines the number of binary models, **-ks** and **-ts** designates the percentage of individuals known at training stage and the percetage of known subject samples using for training, respectively.
+Where **-p** determines the feature path, **-c** is the text file specifying folds, **-d** indicates the dataset name, **-f** specifies the feature file, **-hm** defines the number of binary models, **-hs** specifies the number of samples per hash model, and **-it** indicates the number of repetitions.
