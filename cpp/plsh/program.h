@@ -26,9 +26,15 @@ void options(int argc, char **argv) {
             ("dataset,d", boost::program_options::value<std::string>()
             ->default_value("/Users/Vareto/Documents/PLSHface/frgcv1"), "path to dataset images")
             ("learn,l", boost::program_options::value<std::string>()
+<<<<<<< HEAD:plsh/program.h
+            ->default_value("/Users/Vareto/Documents/PLSHface/frgcv1/train_1.txt"), "one train set for all tests or one for each test set")
+            ("test,e", boost::program_options::value<std::string>()
+            ->default_value("/Users/Vareto/Documents/PLSHface/frgcv1/test_1.txt"), "one train set for all tests or one for each test set")
+=======
             ->default_value("/Users/Vareto/Documents/PLSHface/frgcv1/train_4.txt"), "one train set for all tests or one for each test set")
             ("test,e", boost::program_options::value<std::string>()
             ->default_value("/Users/Vareto/Documents/PLSHface/frgcv1/test_4.txt"), "one train set for all tests or one for each test set")
+>>>>>>> first_version:cpp/plsh/program.h
             ("subjects", boost::program_options::value<int>()
             ->default_value(-1), "limit number of subjects to train")
 
@@ -41,7 +47,7 @@ void options(int argc, char **argv) {
 
             // description
             ("features,f", boost::program_options::value<std::string>()
-            ->default_value("clbp,hog16,hog32,gabor,sift"), "features separated by comma (hog,gray,lbp,gabor,...)")
+            ->default_value("hog"), "features separated by comma (hog,gray,lbp,gabor,...)")
 
             // identification
             ("factors,s", boost::program_options::value<int>()
@@ -164,11 +170,11 @@ std::unordered_map<std::string,
             static cvtools::POEM desc;
             return desc.compute(image);
         }},
+#if 0
     {"sift", [](const cvtools::Image & image) {
-            static cvtools::SIFT desc;
+            static cvtools::Dense desc(new cv::SIFT);
             return desc.compute(image);
         }},
-#if 0
     {"surf", [](const cvtools::Image & image) {
             static cvtools::Dense desc(new cv::SURF);
             return desc.compute(image);
@@ -185,7 +191,7 @@ std::unordered_map<std::string,
             static cvtools::Dense desc(new cv::BRISK);
             return desc.compute(image);
         }},
-#endif
+        #endif
     // second-order
     {"2nd", [](const cvtools::Image & image) {
             static cvtools::Hog desc(cv::Size(16, 16), cv::Size(8, 8), cv::Size(4, 4));

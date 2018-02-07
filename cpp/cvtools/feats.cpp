@@ -388,61 +388,26 @@ namespace cvtools {
     /*
      * SIFT
      */
-    SIFT::SIFT(const int numKeypoints, const int Xstep, const int Ystep) {
-        this->sift = cv::xfeatures2d::SIFT::create();
+    // Dense::Dense(cv::DescriptorExtractor* descriptor, const int step)
+    // : descriptor(descriptor), detector(1, 1, 0.1, step, 0, true, false) {
 
-        this->numKeypoints = numKeypoints;
-        this->Xstep = Xstep;
-        this->Ystep = Ystep;
-    }
+    // }
 
-    Matrix SIFT::compute_impl(const Image& image) const {
-        vector<cv::KeyPoint> keypoints;
-        cv::Mat descriptor;
+    // Dense::~Dense() {
+    //     delete descriptor;
+    // }
 
-        //this->sift->detect(image, keypoints);
-        int stepX = this->Xstep;
-        int stepY = this->Ystep;
+    // Matrix Dense::compute_impl(const Image &image) const {
 
-        if(stepX == -1) {
-            stepX = std::ceil(image.cols / (this->numKeypoints * 2));
-        }
-        if(stepY == -1) {
-            stepY = std::ceil(image.rows / (this->numKeypoints * 2));
-        }
+    //     cv::Mat output;
 
-        for (int y = stepY; y <= image.rows - stepY; y += (2 * stepY)) {
-            for (int x = stepX; x <= image.cols - stepX; x += (2 * stepX)) {
-                keypoints.push_back(cv::KeyPoint(float(x), float(y), float(std::min(stepX, stepY))));
+    //     vector<cv::KeyPoint> keypoints;
+    //     detector.detect(image, keypoints);
 
-            }
-        }
+    //     descriptor->compute(image, keypoints, output);
 
-        this->sift->compute(image, keypoints, descriptor);
-        descriptor.convertTo(descriptor, CV_32F);
+    //     output.convertTo(output, CV_32F);
 
-        return descriptor;
-    }
-
-
-    /*
-     * Dense
-     */
-//    Dense::Dense(cv::DescriptorExtractor* descriptor, const int step)
-//        : descriptor(descriptor), detector(1, 1, 0.1, step, 0, true, false) {
-//    }
-//
-//    Dense::~Dense() {
-//        //delete descriptor;
-//    }
-//
-//    Matrix Dense::compute_impl(const Image &image) const {
-//        cv::Mat output;
-//
-//        detector.detect(image, keypoints);
-//        descriptor->compute(image, keypoints, output);
-//        output.convertTo(output, CV_32F);
-//
-//        return output;
-//    }
+    //     return output;
+    // }
 }
