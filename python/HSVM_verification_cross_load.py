@@ -12,13 +12,13 @@ from auxiliar import generate_pos_neg_dict
 from auxiliar import generate_precision_recall, plot_precision_recall
 from auxiliar import generate_roc_curve, plot_roc_curve
 from auxiliar import iteration_to_fold
-from auxiliar import learn_plsh_cv_model
+from auxiliar import learn_svmh_cv_model
 from auxiliar import load_txt_file, read_fold_file
 from auxiliar import mount_tuple
 from auxiliar import split_into_chunks
 from joblib import Parallel, delayed
 
-parser = argparse.ArgumentParser(description='HPLS for cross-dataset Face Verification with NO Feature Extraction')
+parser = argparse.ArgumentParser(description='HSVM for cross-dataset Face Verification with NO Feature Extraction')
 parser.add_argument('-p', '--path', help='Path do binary feature file', required=False, default='./features/')
 parser.add_argument('-c', '--collection', help='Input file name containing folds', required=False, default='./datasets/pubfig/pubfig_full.txt')
 parser.add_argument('-d', '--dataset', help='Dataset name', required=False, default='lfw')
@@ -40,7 +40,7 @@ HASH_SAMPLES = int(args.hash_samples)
 ITERATIONS = int(args.iterations)
 TRAIN_SET = FEATURES_TRAIN.replace('-DEEP.bin', '')
 TEST_SET = FEATURES_TEST.replace('-DEEP.bin', '')
-OUTPUT_NAME = 'HPLS_CROS_' + TRAIN_SET + '_' + TEST_SET + '_' + str(args.hash_models) + '_' + str(args.hash_samples) + '_' + str(args.iterations)
+OUTPUT_NAME = 'HSVM_CROS_' + TRAIN_SET + '_' + TEST_SET + '_' + str(args.hash_models) + '_' + str(args.hash_samples) + '_' + str(args.iterations)
 
 
 def main():
@@ -51,7 +51,7 @@ def main():
         for index in range(ITERATIONS):
             print('ITERATION #%s' % str(index+1))
             start_time = time.time()
-            pr, roc = hplsfacev(args, parallel_pool)
+            pr, roc = hsvmfacev(args, parallel_pool)
             end_time = time.time()
             
             abs_time = (end_time - start_time) / FOLD
@@ -74,7 +74,7 @@ def main():
             outtime.write(str(np.std(times)) + '\n')
 
 
-def hplsfacev(args, parallel_pool):
+def hsvmfacev(args, parallel_pool):
     print('>> LOADING TRAINING FEATURES')
     with open(PATH + FEATURES_TRAIN, 'rb') as input_file:
         train_paths, train_labels, train_features = pickle.load(input_file)
@@ -84,9 +84,9 @@ def hplsfacev(args, parallel_pool):
     train_list = zip(train_paths, train_labels)
     pos_splits, neg_splits = split_into_chunks(train_list, HASH_MODELS, HASH_SAMPLES)
 
-    print('>> LEARNING PLS MODELS:')
+    print('>> LEARNING SVM MODELS:')
     models = parallel_pool(
-        delayed(learn_plsh_cv_model) (train_features, train_dict, pos_s, neg_s) for (pos_s, neg_s) in zip(pos_splits, neg_splits)
+        delayed(learn_svmh_cv_model) (train_features, train_dict, pos_s, neg_s) for (pos_s, neg_s) in zip(pos_splits, neg_splits)
     )
 
     print('>> REMOVING TRAINING FEATURES')
@@ -111,8 +111,7 @@ def hplsfacev(args, parallel_pool):
         pos_f = pos_folds[fold_index]
         neg_f = neg_folds[fold_index]
             
-        results_c = []
-        results_v = []
+        results = []
         print('> Positive probes:')
         for tuple in pos_f:
             sample_a, sample_b = mount_tuple(tuple, DATASET)
@@ -120,11 +119,9 @@ def hplsfacev(args, parallel_pool):
                 feat_a = test_features[test_dict[sample_a]]
                 feat_b = test_features[test_dict[sample_b]]
                 diff_feat = np.absolute(np.subtract(feat_a, feat_b))
-                response_c = [model[0].predict_confidence(diff_feat) for model in models]
-                response_v = [model[0].predict_value(diff_feat) for model in models]
-                results_c.append((np.sum(response_c), 1))
-                results_v.append((np.mean(response_v), 1))
-                print(sample_a, sample_b, np.sum(response_c), np.mean(response_v))
+                response = [model[0].predict([diff_feat]) for model in models]
+                results.append((np.sum(response), 1.0))
+                print(sample_a, sample_b, np.sum(response))
         
         print('> Negative probes:')
         for tuple in neg_f:
@@ -133,15 +130,13 @@ def hplsfacev(args, parallel_pool):
                 feat_a = test_features[test_dict[sample_a]]
                 feat_b = test_features[test_dict[sample_b]]
                 diff_feat = np.absolute(np.subtract(feat_a, feat_b))
-                response_c = [model[0].predict_confidence(diff_feat) for model in models]
-                response_v = [model[0].predict_value(diff_feat) for model in models]
-                results_c.append((np.sum(response_c), 0))
-                results_v.append((np.mean(response_v), 0))
-                print(sample_a, sample_b, np.sum(response_c), np.mean(response_v))
+                response = [model[0].predict([diff_feat]) for model in models]
+                results.append((np.sum(response), 0.0))
+                print(sample_a, sample_b, np.sum(response))
                 
         plotting_labels = []
         plotting_scores = []
-        for res in results_v:
+        for res in results:
             plotting_labels.append(('_', res[1]))
             plotting_scores.append(('_', res[0]))
             

@@ -12,6 +12,8 @@ from pls_classifier import PLSClassifier
 from sklearn.metrics import auc
 from sklearn.metrics import average_precision_score, precision_recall_curve
 from sklearn.metrics import roc_curve, roc_auc_score
+from sklearn.svm import SVC
+from sklearn.svm import SVR
 
 
 def load_txt_file(file_name):
@@ -32,7 +34,7 @@ def read_fold_file(file_name):
         file_list = file_input.readlines()
         for index in range(len(file_list)):
             file_list[index] = file_list[index].replace(' ', '_').strip().split('\t')
-        
+            
         index = 0;
         while str(file_list[index][0]).startswith('#'):
             index += 1
@@ -260,6 +262,17 @@ def learn_plsh_v_model(pos_split, neg_split):
     return model
 
 
+def learn_svmh_v_model(pos_split, neg_split):
+    neg_label = np.zeros(len(neg_split))
+    pos_label = np.ones(len(pos_split))
+    labels = np.concatenate([neg_label, pos_label])
+    splits = neg_split + pos_split
+    
+    classifier = SVR(C=1.0,kernel='linear')
+    model = classifier.fit(np.array(splits), np.array(labels))
+    return model
+
+
 def learn_plsh_cv_model(features, dictionary, pos_split, neg_split):
     matrix_x = []
     matrix_y = []
@@ -279,6 +292,29 @@ def learn_plsh_cv_model(features, dictionary, pos_split, neg_split):
         matrix_y.append(0)
 
     classifier = PLSClassifier()
+    model = classifier.fit(np.array(matrix_x), np.array(matrix_y))
+    return (model, (pos_split, neg_split))
+
+
+def learn_svmh_cv_model(features, dictionary, pos_split, neg_split):
+    matrix_x = []
+    matrix_y = []
+    
+    for pos in pos_split:
+        index_a = dictionary[pos[0]]
+        index_b = dictionary[pos[1]]
+        diff_feat = np.absolute(np.subtract(features[index_a], features[index_b]))
+        matrix_x.append(diff_feat)
+        matrix_y.append(1)
+        
+    for neg in neg_split:
+        index_a = dictionary[neg[0]]
+        index_b = dictionary[neg[1]]
+        diff_feat = np.absolute(np.subtract(features[index_a], features[index_b]))
+        matrix_x.append(diff_feat)
+        matrix_y.append(0)
+
+    classifier = SVR(C=1.0,kernel='linear')
     model = classifier.fit(np.array(matrix_x), np.array(matrix_y))
     return (model, (pos_split, neg_split))
 
@@ -384,7 +420,7 @@ def plot_precision_recall(prs, extra_name=None):
     plt.ylabel('Precision')
     plt.ylim([0.0, 1.05])
     plt.xlim([0.0, 1.0])
-    plt.title('Precision-Recall Curve (area = %0.2f)' % np.mean(aucs))
+    plt.title('Precision-Recall Curve (%0.3f - %0.3f)' % (np.mean(aucs),np.std(aucs)))
     plt.legend(loc="lower left")
     plt.grid()
     if extra_name == None:
@@ -412,7 +448,7 @@ def plot_roc_curve(rocs, extra_name=None):
     plt.ylim([0.0, 1.05])
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
-    plt.title('Receiver Operating Characteristic (area = %0.2f)' % np.mean(aucs))
+    plt.title('Receiver Operating Characteristic (%0.3f - %0.3f)' % (np.mean(aucs),np.std(aucs)))
     plt.legend(loc="lower right")
     plt.grid()
     if extra_name == None:
